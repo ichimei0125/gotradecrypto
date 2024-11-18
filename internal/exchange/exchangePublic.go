@@ -1,17 +1,11 @@
 package exchange
 
-import "fmt"
-
 type Exchange interface {
-	FetchPrice(symbol Symbol) (float64, error)
+	FetchKLine(symbol Symbol) []KLine
 }
 
 // 主逻辑，接受 Exchange 接口
-func FetchPriceFromExchange(exchange Exchange, symbol Symbol) {
-	price, err := exchange.FetchPrice(symbol)
-	if err != nil {
-		fmt.Printf("Error fetching price: %v\n", err)
-		return
-	}
-	fmt.Printf("Price: %.2f\n", price)
+func GetKLineAndIndicators(exchange Exchange, symbol Symbol) []KLine {
+	kline := exchange.FetchKLine(symbol)
+	return kline
 }
