@@ -16,7 +16,7 @@ func main() {
 
 		symbol := exchange.BTCJPY
 
-		kline := exchange.GetKLineAndIndicators(bitflyer, symbol)
+		kline := exchange.GetKLine(bitflyer, symbol)
 		indicator.GetIndicators(&kline)
 
 		if len(kline) < common.KLINE_LENGTH {

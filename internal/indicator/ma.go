@@ -10,8 +10,8 @@ func SMA(data *[]exchange.KLine, period int) {
 	start_index := len(*data) - period
 	d := *data
 
-	if d[start_index].SMA != 0.0 {
-		d[start_index].SMA = exchange.SumClose(d[start_index:]) / float64(period)
+	if d[start_index].SMA == 0.0 {
+		d[start_index].SMA = math.Round(exchange.SumClose(d[start_index:])/float64(period)*1000) / 1000 // 小数点後3位
 	}
 
 	for i := start_index - 1; i >= 0; i = i - 1 {
