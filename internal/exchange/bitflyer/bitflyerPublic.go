@@ -153,6 +153,24 @@ func convertExetutionsToKLine(executions []Execution) []exchange.KLine {
 }
 
 func getsymbol(symbol exchange.Symbol) string {
-	// TODO
-	return "BTC_JPY"
+	switch symbol {
+	case exchange.BTCJPY:
+		return "BTC_JPY"
+	case exchange.XRPJPY:
+		return "XRP_JPY"
+	case exchange.ETHJPY:
+		return "ETH_JPY"
+	case exchange.XLMJPY:
+		return "XLM_JPY"
+	case exchange.MONAJPY:
+		return "MONA_JPY"
+	case exchange.ETHBTC:
+		return "ETH_BTC"
+	case exchange.BCHBTC:
+		return "BCH_BTC"
+	case exchange.FX_BTCJPY:
+		return "FX_BTC_JPY"
+	default:
+		panic(fmt.Sprintf("bitflyer err symbol %s", symbol))
+	}
 }
