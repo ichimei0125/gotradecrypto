@@ -40,7 +40,6 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol) []exchange.KLine {
 
 		cache_kline = merged
 
-		log.Printf("cache kline len: %d, cap: %d", len(merged), cap(merged))
 		if len(cache_kline) >= common.KLINE_LENGTH {
 			// 按时间倒序排序
 			sort.Slice(cache_kline, func(i, j int) bool {
