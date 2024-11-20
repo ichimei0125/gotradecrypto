@@ -19,15 +19,6 @@ func sma(data *[]exchange.KLine, period int) {
 	}
 }
 
-func sma_new(data *[]exchange.KLine, period int) {
-	start_index := len(*data) - period
-	d := *data
-
-	for i := start_index; i >= 0; i = i - 1 {
-		d[i].SMA_new = calculateSMA(exchange.GetClose(d[i : i+period]))
-	}
-}
-
 func ema(data *[]exchange.KLine, period int) {
 	d := *data
 	alpha := math.Round(2.0/float64(period+1)*1000) / 1000 // 小数点後３位

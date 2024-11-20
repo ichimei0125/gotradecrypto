@@ -120,6 +120,8 @@ func convertExetutionsToKLine(executions []Execution) []exchange.KLine {
 
 	kline := []exchange.KLine{}
 
+	time_unit = time_unit.Add(-time.Minute * time.Duration(minute_unit))
+
 	tmp_kline := exchange.KLine{
 		Open:      executions[0].Price,
 		Close:     executions[0].Price,
@@ -127,8 +129,6 @@ func convertExetutionsToKLine(executions []Execution) []exchange.KLine {
 		Low:       executions[0].Price,
 		CloseTime: time_unit,
 	}
-
-	time_unit = time_unit.Add(-time.Minute * time.Duration(minute_unit))
 
 	for _, execution := range executions[1:] {
 		if execution.ExecDate.Time.Before(time_unit) {

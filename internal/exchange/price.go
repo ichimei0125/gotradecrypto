@@ -15,7 +15,6 @@ type KLine struct {
 
 	// indicators
 	SMA             float64
-	SMA_new         float64
 	EMA             float64
 	BBands_Plus_3K  float64
 	BBands_Plus_2K  float64
