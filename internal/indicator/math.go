@@ -1,6 +1,17 @@
 package indicator
 
-import "math"
+import (
+	"math"
+	"sort"
+)
+
+func calculateSMA(values []float64) float64 {
+	sum := 0.0
+	for _, v := range values {
+		sum += v
+	}
+	return sum / float64(len(values))
+}
 
 // 计算平均值
 func mean(data []float64) float64 {
@@ -28,4 +39,14 @@ func standardDeviation(data []float64) float64 {
 
 	// 返回平方差的均值的平方根
 	return math.Sqrt(sumOfSquares / float64(len(data)))
+}
+
+func maxFloat64(slice []float64) float64 {
+	sort.Sort(sort.Float64Slice(slice))
+	return slice[len(slice)-1]
+}
+
+func minFloat64(slice []float64) float64 {
+	sort.Sort(sort.Float64Slice(slice))
+	return slice[0]
 }

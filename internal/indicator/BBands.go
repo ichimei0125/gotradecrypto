@@ -2,7 +2,7 @@ package indicator
 
 import "github.com/ichimei0125/gotradecrypto/internal/exchange"
 
-func BBands(data *[]exchange.KLine, period int) {
+func bbands(data *[]exchange.KLine, period int) {
 	d := *data
 	for i := len(d) - period; i >= 0; i -= 1 {
 		if d[i].SMA == 0.0 {
