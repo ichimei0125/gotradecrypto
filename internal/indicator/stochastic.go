@@ -19,7 +19,7 @@ func stochastic(data *[]exchange.KLine) {
 	for i := start_index; i >= 0; i-- {
 		lowest := d[i].Low
 		highest := d[i].High
-		for j := i + 1; j <= i+period; j++ {
+		for j := i + 1; j < i+period; j++ {
 			if d[j].Low < lowest {
 				lowest = d[j].Low
 			}
