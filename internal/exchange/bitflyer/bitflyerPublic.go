@@ -13,10 +13,13 @@ import (
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 )
 
-var cache_kline []exchange.KLine
-
-func (b *Bitflyer) FetchKLine(s exchange.Symbol) []exchange.KLine {
+func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 	var oldest_id int64 = 0
+
+	klineMap := make(map[time.Time]exchange.KLine)
+	for _, kline := range *cache {
+		klineMap[kline.CloseTime] = kline
+	}
 
 	for {
 		excutions := FetchExecution(s, 0, oldest_id, 0)
@@ -24,10 +27,6 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol) []exchange.KLine {
 
 		new_kline := convertExetutionsToKLine(excutions)
 
-		klineMap := make(map[time.Time]exchange.KLine)
-		for _, kline := range cache_kline {
-			klineMap[kline.CloseTime] = kline
-		}
 		for _, kline := range new_kline {
 			klineMap[kline.CloseTime] = kline
 		}
@@ -38,20 +37,17 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol) []exchange.KLine {
 			merged = append(merged, kline)
 		}
 
-		cache_kline = merged
-
-		if len(cache_kline) >= common.KLINE_LENGTH {
+		if len(merged) >= common.KLINE_LENGTH {
 			// 按时间倒序排序
-			sort.Slice(cache_kline, func(i, j int) bool {
-				return cache_kline[i].CloseTime.After(cache_kline[j].CloseTime)
+			sort.Slice(merged, func(i, j int) bool {
+				return merged[i].CloseTime.After(merged[j].CloseTime)
 			})
+
+			*cache = merged[:common.KLINE_LENGTH:common.KLINE_LENGTH]
+
 			break
 		}
 	}
-
-	cache_kline = cache_kline[:common.KLINE_LENGTH:common.KLINE_LENGTH]
-
-	return cache_kline
 }
 
 func coreGetURL(url string) *http.Response {
