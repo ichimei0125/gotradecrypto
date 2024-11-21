@@ -6,12 +6,12 @@ type Exchange interface {
 	// Public
 	FetchKLine(symbol Symbol, cache *[]KLine)
 	// Private
-	// BuyCypto(jpy float64)
-	// SellCypto(jpy float64) // 0 for sell all
+	BuyCypto(symbol Symbol, size float64, price float64)
+	SellCypto(symbol Symbol, size float64, price float64)
 
-	GetBalance(b Balance) (float64, float64)                       // amount, avaiable
-	GetOrderNum(symbol Symbol, status OrderStatus, minues int) int // number of special orderstatus
-	// CancelOrder()
+	GetBalance(b Balance) (float64, float64)                                    // amount, avaiable
+	GetOrderNum(symbol Symbol, status OrderStatus, minues int, side string) int // number of special orderstatus
+	CancelAllOrder(symbol Symbol)
 }
 
 type Balance string

@@ -100,14 +100,14 @@ func getbalancevalue(b exchange.Balance) string {
 	}
 }
 
-func (b *Bitflyer) GetOrderNum(symbol exchange.Symbol, status exchange.OrderStatus, minues int) int {
+func (b *Bitflyer) GetOrderNum(symbol exchange.Symbol, status exchange.OrderStatus, minues int, side string) int {
 	cnt := 0
 	childorders := getChildOrders(getsymbol(symbol), getorderstatus(status))
 
-	time_after := common.GetUTCNow().Add(time.Duration(-10) * time.Minute)
+	time_after := common.GetUTCNow().Add(time.Duration(-minues) * time.Minute)
 
 	for _, order := range childorders {
-		if order.ChildOrderDate.After(time_after) {
+		if order.ChildOrderDate.After(time_after) && order.Side == side {
 			cnt += 1
 		}
 	}
@@ -163,5 +163,52 @@ func getChildOrders(product_code string, child_order_status string) []childOrder
 		panic("ERROR GetChildOrders: " + err.Error())
 	}
 	return childorders
+}
 
+func (b *Bitflyer) CancelAllOrder(symbol exchange.Symbol) {
+	path := "/v1/me/cancelallchildorders"
+	body := fmt.Sprintf(`{
+		"product_code": "%s"
+	}`, getsymbol(symbol))
+	bitFlyerPrivateAPICore(path, "POST", []byte(body))
+}
+
+type sendchildorder struct {
+	ProductCode    string  `json:"product_code"`
+	ChildOrderType string  `json:"child_order_type"`
+	Side           string  `json:"side"`
+	Price          float64 `json:"price"`
+	Size           float64 `json:"size"`
+	MinuteToExpire int     `json:"minute_to_expire"`
+	TimeInForce    string  `json:"time_in_force"`
+}
+
+func (b *Bitflyer) BuyCypto(symbol exchange.Symbol, size float64, price float64) {
+	sendChildOrder(symbol, size, price, "BUY")
+}
+
+func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64) {
+	sendChildOrder(symbol, size, price, "SELL")
+}
+
+func sendChildOrder(symbol exchange.Symbol, size float64, price float64, side string) {
+	order := sendchildorder{
+		ProductCode:    getsymbol(symbol),
+		ChildOrderType: "LIMIT",
+		Side:           side,
+		Price:          price,
+		Size:           size,
+		MinuteToExpire: 3,
+		TimeInForce:    "GTC",
+	}
+
+	// 生成 JSON
+	jsonData, err := json.MarshalIndent(order, "", "  ")
+	if err != nil {
+		log.Fatalf("Error: %s", err)
+		return
+	}
+
+	path := "/v1/me/sendchildorder"
+	bitFlyerPrivateAPICore(path, "POST", []byte(jsonData))
 }
