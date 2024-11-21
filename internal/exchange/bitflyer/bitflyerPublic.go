@@ -50,7 +50,7 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 	}
 }
 
-func coreGetURL(url string) *http.Response {
+func bitflyerPublicAPICore(url string) *http.Response {
 	// TODO impl 制限
 	resp, err := http.Get(url)
 	if err != nil {
@@ -63,7 +63,6 @@ func FetchExecution(s exchange.Symbol, count int, before_id int64, after_id int6
 
 	symbol := getsymbol(s)
 
-	baseURL := "https://api.bitflyer.com"
 	endpoint := "/v1/getexecutions"
 	u, err := url.Parse(baseURL + endpoint)
 	if err != nil {
@@ -84,7 +83,7 @@ func FetchExecution(s exchange.Symbol, count int, before_id int64, after_id int6
 	}
 	u.RawQuery = q.Encode()
 
-	resp := coreGetURL(u.String())
+	resp := bitflyerPublicAPICore(u.String())
 	defer resp.Body.Close()
 
 	// // Decode the JSON response into a slice of Executions

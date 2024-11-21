@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+const baseURL = "https://api.bitflyer.com"
+
 type Bitflyer struct{}
 
 // Execution represents a single execution from bitFlyer

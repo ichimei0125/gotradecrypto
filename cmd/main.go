@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	var cache_kline *[]exchange.KLine = &[]exchange.KLine{}
+	var kline *[]exchange.KLine = &[]exchange.KLine{}
 
 	log.Println("Time, CloseTime, kline, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, BUY, SELL")
 	for {
@@ -20,17 +20,12 @@ func main() {
 
 		symbol := exchange.BTCJPY
 
-		exchange.GetKLine(bitflyer, symbol, cache_kline)
-		indicator.GetIndicators(cache_kline)
+		exchange.GetKLine(bitflyer, symbol, kline)
+		indicator.GetIndicators(kline)
 
-		if len(*cache_kline) < common.KLINE_LENGTH {
-			log.Printf("not enough data")
-		}
-
-		go trade.Trade(cache_kline)
+		go trade.Trade(kline)
 
 		// sleep
 		time.Sleep(time.Duration(common.REFRESH_INTERVAL) * time.Minute)
-
 	}
 }

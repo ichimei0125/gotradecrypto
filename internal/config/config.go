@@ -21,7 +21,7 @@ type Config struct {
 
 func GetConfig() Config {
 	// 读取配置文件
-	data, err := os.ReadFile("config.yml")
+	data, err := os.ReadFile("../config.yaml")
 	if err != nil {
 		log.Fatalf("error reading config file: %v", err)
 	}

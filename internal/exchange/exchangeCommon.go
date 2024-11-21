@@ -1,5 +1,26 @@
 package exchange
 
+type Exchange interface {
+	// Public
+	FetchKLine(symbol Symbol, cache *[]KLine)
+	// Private
+	// BuyCypto(jpy float64)
+	// SellCypto(jpy float64) // 0 for sell all
+
+	GetBalance(b Balance) (float64, float64)
+	// GetTradeHistory
+	// GetOrder()
+	// CancelOrder()
+}
+
+type Balance string
+
+const (
+	JPY = "JPY"
+	BTC = "BTC"
+	ETH = "ETH"
+)
+
 type Symbol string
 
 const (
