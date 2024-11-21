@@ -217,8 +217,16 @@ func (b *Bitflyer) BuyCypto(symbol exchange.Symbol, size float64, price float64)
 }
 
 func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64) {
-	size = checkSizeLimit(symbol, size)
-	sendChildOrder(symbol, size, price, "SELL", "LIMIT")
+	// size = checkSizeLimit(symbol, size)
+	// TOOD 考虑size的策略
+	positions, _ := getPositions(getsymbol(symbol))
+	var _size float64 = 0
+	for _, position := range positions {
+		_size += position.Size
+	}
+
+	// TODO 使用LIMIT
+	sendChildOrder(symbol, _size, price, "SELL", "MARKET")
 }
 
 func (b *Bitflyer) SellAllCypto() {
@@ -265,4 +273,29 @@ func sendChildOrder(symbol exchange.Symbol, size float64, price float64, side st
 
 	path := "/v1/me/sendchildorder"
 	bitFlyerPrivateAPICore(path, "POST", []byte(jsonData))
+}
+
+type position struct {
+	ProductCode         string     `json:"product_code"`          // 产品代码
+	Side                string     `json:"side"`                  // 买卖方向
+	Price               float64    `json:"price"`                 // 成交价格
+	Size                float64    `json:"size"`                  // 成交数量
+	Commission          float64    `json:"commission"`            // 佣金
+	SwapPointAccumulate float64    `json:"swap_point_accumulate"` // 积累的掉期点
+	RequireCollateral   float64    `json:"require_collateral"`    // 所需保证金
+	OpenDate            CustomTime `json:"open_date"`             // 开仓时间
+	Leverage            float64    `json:"leverage"`              // 杠杆
+	PNL                 float64    `json:"pnl"`                   // 盈亏
+	SFD                 float64    `json:"sfd"`                   // 闪电掉期费
+}
+
+func getPositions(product_code string) ([]position, error) {
+	endpoint := "/v1/me/getpositions"
+	method := "GET"
+	path := endpoint + "?product_code=" + product_code
+	res := bitFlyerPrivateAPICore(path, method, nil)
+
+	var positions []position
+	err := json.Unmarshal([]byte(res), &positions)
+	return positions, err
 }
