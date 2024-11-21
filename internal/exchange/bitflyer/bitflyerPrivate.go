@@ -217,7 +217,6 @@ func (b *Bitflyer) BuyCypto(symbol exchange.Symbol, size float64, price float64)
 }
 
 func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64) {
-	// size = checkSizeLimit(symbol, size)
 	// TOOD 考虑size的策略
 	positions, _ := getPositions(getsymbol(symbol))
 	var _size float64 = 0
@@ -254,6 +253,10 @@ func (b *Bitflyer) SellAllCypto() {
 }
 
 func sendChildOrder(symbol exchange.Symbol, size float64, price float64, side string, ordertype string) {
+	if size <= 0.0 {
+		return
+	}
+
 	order := sendchildorder{
 		ProductCode:    getsymbol(symbol),
 		ChildOrderType: ordertype,
