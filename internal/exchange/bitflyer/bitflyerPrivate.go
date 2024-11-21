@@ -231,6 +231,9 @@ func (b *Bitflyer) SellAllCypto() {
 		if balance.CurrencyCode == exchange.JPY {
 			continue
 		}
+		if balance.Available <= 0.0 {
+			continue
+		}
 
 		var s exchange.Symbol
 		switch balance.CurrencyCode {
