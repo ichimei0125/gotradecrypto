@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ichimei0125/gotradecrypto/internal/common"
 	"github.com/ichimei0125/gotradecrypto/internal/config"
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 )
@@ -97,4 +98,70 @@ func getbalancevalue(b exchange.Balance) string {
 	default:
 		panic(fmt.Sprintf("bitflyer err balance %s", b))
 	}
+}
+
+func (b *Bitflyer) GetOrderNum(symbol exchange.Symbol, status exchange.OrderStatus, minues int) int {
+	cnt := 0
+	childorders := getChildOrders(getsymbol(symbol), getorderstatus(status))
+
+	time_after := common.GetUTCNow().Add(time.Duration(-10) * time.Minute)
+
+	for _, order := range childorders {
+		if order.ChildOrderDate.After(time_after) {
+			cnt += 1
+		}
+	}
+	return cnt
+
+}
+
+func getorderstatus(status exchange.OrderStatus) string {
+	switch status {
+	case exchange.ACTIVE:
+		return "ACTIVE"
+	case exchange.COMPLETED:
+		return "COMPLETED"
+	case exchange.CANCELED:
+		return "CANCELED"
+	case exchange.REJECTED:
+		return "REJECTED"
+	default:
+		panic(fmt.Sprintf("bitflyer err orderstatus %s", status))
+	}
+
+}
+
+// 注文状態
+type childOrder struct {
+	Id                     int64      `json:"id"`
+	ChildOrderID           string     `json:"child_order_id"`
+	ProductCode            string     `json:"product_code"`
+	Side                   string     `json:"side"`
+	ChildOrderType         string     `json:"child_order_type"`
+	Price                  float64    `json:"price"`
+	AveragePrice           float64    `json:"average_price"`
+	Size                   float64    `json:"size"`
+	ChildOrderState        string     `json:"child_order_state"`
+	ExpireDate             CustomTime `json:"expire_date"`
+	ChildOrderDate         CustomTime `json:"child_order_date"`
+	ChildOrderAcceptanceID string     `json:"child_order_acceptance_id"`
+	OutstandingSize        float64    `json:"outstanding_size"`
+	CancelSize             float64    `json:"cancel_size"`
+	ExecutedSize           float64    `json:"executed_size"`
+	TotalCommission        float64    `json:"total_commission"`
+	TimeInForce            string     `json:"time_in_force"`
+}
+
+func getChildOrders(product_code string, child_order_status string) []childOrder {
+	endpoint := "/v1/me/getchildorders"
+	path := endpoint + "?product_code=" + product_code + "&child_order_state=" + child_order_status
+
+	res := bitFlyerPrivateAPICore(path, "GET", nil)
+	var childorders []childOrder
+	err := json.Unmarshal([]byte(res), &childorders)
+	if err != nil {
+		panic("ERROR GetChildOrders: " + err.Error())
+	}
+	return childorders
+
 }

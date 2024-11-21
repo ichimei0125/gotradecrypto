@@ -23,7 +23,7 @@ func main() {
 		exchange.GetKLine(bitflyer, symbol, kline)
 		indicator.GetIndicators(kline)
 
-		go trade.Trade(kline)
+		go trade.Trade(bitflyer, symbol, kline)
 
 		// sleep
 		time.Sleep(time.Duration(common.REFRESH_INTERVAL) * time.Minute)

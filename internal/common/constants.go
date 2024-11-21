@@ -5,4 +5,5 @@ const (
 	KLINE_INTERVAL     int = 3    // Klineの時間単位
 	KLINE_LENGTH       int = 1000 // Klineの長さ（cache）
 	TRADE_WATCH_MINUTE int = 10   // 10分以内買い/売りがあれば、何もしない
+	ORDER_WAIT_MINUTE  int = 3    // 規定時間内注文完了していないの場合、キャンセルし再発注
 )
