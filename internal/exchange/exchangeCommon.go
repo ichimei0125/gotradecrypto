@@ -8,9 +8,10 @@ type Exchange interface {
 	// Private
 	BuyCypto(symbol Symbol, size float64, price float64)
 	SellCypto(symbol Symbol, size float64, price float64)
+	SellAllCypto()
 
-	GetBalance(b Balance) (float64, float64)                                    // amount, avaiable
-	GetOrderNum(symbol Symbol, status OrderStatus, minues int, side string) int // number of special orderstatus
+	GetBalance(b Balance) (float64, float64)                                  // amount, avaiable
+	GetOrderNum(symbol Symbol, status OrderStatus, minues int, side Side) int // number of special orderstatus
 	CancelAllOrder(symbol Symbol)
 }
 
@@ -52,4 +53,11 @@ const (
 	COMPLETED OrderStatus = "completed"
 	CANCELED  OrderStatus = "canceled"
 	REJECTED  OrderStatus = "rejected"
+)
+
+type Side string
+
+const (
+	BUY  Side = "side"
+	SELL Side = "sell"
 )

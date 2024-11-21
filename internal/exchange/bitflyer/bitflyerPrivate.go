@@ -64,20 +64,13 @@ type balance struct {
 }
 
 func (b *Bitflyer) GetBalance(ba exchange.Balance) (float64, float64) {
-	path := "/v1/me/getbalance"
-	method := "GET"
-
-	baVal := getbalancevalue(ba)
-
-	res := bitFlyerPrivateAPICore(path, method, nil)
-
-	var balances []balance
-	err := json.Unmarshal([]byte(res), &balances)
+	balances, err := getbalance()
 	if err != nil {
 		log.Println("Error:", err)
 		return -1.0, -1.0
 	}
 
+	baVal := getbalancevalue(ba)
 	for _, d := range balances {
 		if d.CurrencyCode == baVal {
 			return d.Amount, d.Available
@@ -85,6 +78,16 @@ func (b *Bitflyer) GetBalance(ba exchange.Balance) (float64, float64) {
 	}
 
 	return -1.0, -1.0
+}
+
+func getbalance() ([]balance, error) {
+	path := "/v1/me/getbalance"
+	method := "GET"
+	res := bitFlyerPrivateAPICore(path, method, nil)
+
+	var balances []balance
+	err := json.Unmarshal([]byte(res), &balances)
+	return balances, err
 }
 
 func getbalancevalue(b exchange.Balance) string {
@@ -100,19 +103,23 @@ func getbalancevalue(b exchange.Balance) string {
 	}
 }
 
-func (b *Bitflyer) GetOrderNum(symbol exchange.Symbol, status exchange.OrderStatus, minues int, side string) int {
+func (b *Bitflyer) GetOrderNum(symbol exchange.Symbol, status exchange.OrderStatus, minues int, side exchange.Side) int {
 	cnt := 0
 	childorders := getChildOrders(getsymbol(symbol), getorderstatus(status))
 
 	time_after := common.GetUTCNow().Add(time.Duration(-minues) * time.Minute)
 
 	for _, order := range childorders {
-		if order.ChildOrderDate.After(time_after) && order.Side == side {
+		if order.ChildOrderDate.After(time_after) && order.Side == sideMap[side] {
 			cnt += 1
 		}
 	}
 	return cnt
+}
 
+var sideMap map[exchange.Side]string = map[exchange.Side]string{
+	exchange.BUY:  "BUY",
+	exchange.SELL: "SELL",
 }
 
 func getorderstatus(status exchange.OrderStatus) string {
@@ -183,18 +190,62 @@ type sendchildorder struct {
 	TimeInForce    string  `json:"time_in_force"`
 }
 
+// 売買最小単位
+// https://bitflyer.com/ja-jp/s/commission
+func checkSizeLimit(symbol exchange.Symbol, size float64) float64 {
+	var limitMap map[exchange.Symbol]float64 = map[exchange.Symbol]float64{
+		exchange.BTCJPY:    0.001,
+		exchange.XRPJPY:    0.1,
+		exchange.ETHJPY:    0.01,
+		exchange.XLMJPY:    0.1,
+		exchange.MONAJPY:   0.1,
+		exchange.ETHBTC:    0.01,
+		exchange.BCHBTC:    0.01,
+		exchange.FX_BTCJPY: 0.001,
+	}
+	limit := limitMap[symbol]
+	if size < limit {
+		size = limit
+	}
+
+	return size
+}
+
 func (b *Bitflyer) BuyCypto(symbol exchange.Symbol, size float64, price float64) {
-	sendChildOrder(symbol, size, price, "BUY")
+	size = checkSizeLimit(symbol, size)
+	sendChildOrder(symbol, size, price, "BUY", "LIMIT")
 }
 
 func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64) {
-	sendChildOrder(symbol, size, price, "SELL")
+	size = checkSizeLimit(symbol, size)
+	sendChildOrder(symbol, size, price, "SELL", "LIMIT")
 }
 
-func sendChildOrder(symbol exchange.Symbol, size float64, price float64, side string) {
+func (b *Bitflyer) SellAllCypto() {
+	balances, err := getbalance()
+	if err != nil {
+		log.Fatalf("bitflyer cannot sell all %s", err)
+	}
+
+	for _, balance := range balances {
+		if balance.CurrencyCode == exchange.JPY {
+			continue
+		}
+
+		var s exchange.Symbol
+		switch balance.CurrencyCode {
+		case exchange.BTC:
+			s = exchange.BTCJPY
+		}
+
+		sendChildOrder(s, balance.Available, 0, "SELL", "MARKET")
+	}
+}
+
+func sendChildOrder(symbol exchange.Symbol, size float64, price float64, side string, ordertype string) {
 	order := sendchildorder{
 		ProductCode:    getsymbol(symbol),
-		ChildOrderType: "LIMIT",
+		ChildOrderType: ordertype,
 		Side:           side,
 		Price:          price,
 		Size:           size,

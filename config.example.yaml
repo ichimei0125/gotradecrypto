@@ -5,4 +5,3 @@ bitflyer:
 trade:
   invest_money: 10000
   cut_loss: 57000
-  leave_money: 50000

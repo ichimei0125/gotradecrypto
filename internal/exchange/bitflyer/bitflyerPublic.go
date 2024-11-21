@@ -18,7 +18,7 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 
 	klineMap := make(map[time.Time]exchange.KLine)
 	for _, kline := range *cache {
-		klineMap[kline.CloseTime] = kline
+		klineMap[kline.OpenTime] = kline
 	}
 
 	for {
@@ -28,7 +28,7 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 		new_kline := convertExetutionsToKLine(excutions)
 
 		for _, kline := range new_kline {
-			klineMap[kline.CloseTime] = kline
+			klineMap[kline.OpenTime] = kline
 		}
 
 		// 将 map 转换为切片
@@ -40,7 +40,7 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 		if len(merged) >= common.KLINE_LENGTH {
 			// 按时间倒序排序
 			sort.Slice(merged, func(i, j int) bool {
-				return merged[i].CloseTime.After(merged[j].CloseTime)
+				return merged[i].OpenTime.After(merged[j].OpenTime)
 			})
 
 			*cache = merged[:common.KLINE_LENGTH:common.KLINE_LENGTH]
@@ -118,11 +118,11 @@ func convertExetutionsToKLine(executions []Execution) []exchange.KLine {
 	time_unit = time_unit.Add(-time.Minute * time.Duration(minute_unit))
 
 	tmp_kline := exchange.KLine{
-		Open:      executions[0].Price,
-		Close:     executions[0].Price,
-		High:      executions[0].Price,
-		Low:       executions[0].Price,
-		CloseTime: time_unit,
+		Open:     executions[0].Price,
+		Close:    executions[0].Price,
+		High:     executions[0].Price,
+		Low:      executions[0].Price,
+		OpenTime: time_unit,
 	}
 
 	for _, execution := range executions[1:] {
@@ -130,11 +130,11 @@ func convertExetutionsToKLine(executions []Execution) []exchange.KLine {
 			kline = append(kline, tmp_kline)
 			time_unit = time_unit.Add(-time.Minute * time.Duration(minute_unit))
 			tmp_kline = exchange.KLine{
-				Open:      execution.Price,
-				Close:     execution.Price,
-				High:      execution.Price,
-				Low:       execution.Price,
-				CloseTime: time_unit,
+				Open:     execution.Price,
+				Close:    execution.Price,
+				High:     execution.Price,
+				Low:      execution.Price,
+				OpenTime: time_unit,
 			}
 		} else {
 			// 時間単位内
