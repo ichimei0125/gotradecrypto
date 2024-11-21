@@ -246,6 +246,10 @@ func (b *Bitflyer) SellAllCypto() {
 		switch balance.CurrencyCode {
 		case exchange.BTC:
 			s = exchange.BTCJPY
+		case exchange.ETH:
+			s = exchange.ETHJPY
+		default:
+			log.Panicf("bitflyer sell all not support: %s", s)
 		}
 
 		sendChildOrder(s, balance.Available, 0, "SELL", "MARKET")
