@@ -246,7 +246,7 @@ func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64
 
 	// TODO 使用LIMIT
 	sendChildOrder(symbol, _size, price, "SELL", "MARKET")
-	log.Printf("SELL, symbol %s, size %f, price %f", symbol, size, price)
+	log.Printf("SELL, symbol %s, size %f, price %f", symbol, _size, price)
 }
 
 func (b *Bitflyer) SellAllCypto() {
