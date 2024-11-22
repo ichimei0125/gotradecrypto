@@ -18,7 +18,7 @@ import (
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 )
 
-func bitFlyerPrivateAPICore(path string, method string, body []byte) []byte {
+func bitFlyerPrivateAPICore(path string, method string, body []byte, is_log ...bool) []byte {
 
 	config := config.GetConfig()
 	key := config.Bitflyer.APIKey
@@ -53,6 +53,10 @@ func bitFlyerPrivateAPICore(path string, method string, body []byte) []byte {
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		panic("wrong private api response")
+	}
+
+	if len(is_log) > 0 && is_log[0] {
+		log.Printf("bitflyer private rep: %s", string(responseBody))
 	}
 
 	return responseBody
@@ -322,7 +326,7 @@ func sendChildOrder(symbol exchange.Symbol, size float64, price float64, side st
 	}
 
 	path := "/v1/me/sendchildorder"
-	bitFlyerPrivateAPICore(path, "POST", []byte(jsonData))
+	bitFlyerPrivateAPICore(path, "POST", []byte(jsonData), true)
 }
 
 type position struct {
