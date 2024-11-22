@@ -242,7 +242,7 @@ func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64
 	}
 
 	comission := getTradingCommission(getsymbol(symbol))
-	_size = _size - getDotDigits(comission*_size, 8) - 0.00001
+	_size = getDotDigits(_size-comission, 1)
 
 	// TODO 使用LIMIT
 	sendChildOrder(symbol, _size, price, "SELL", "MARKET")
