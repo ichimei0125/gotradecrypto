@@ -18,9 +18,15 @@ type Exchange interface {
 type Balance string
 
 const (
-	JPY = "JPY"
-	BTC = "BTC"
-	ETH = "ETH"
+	JPY    = "JPY"
+	FX_JPY = "FX_JPY"
+	BTC    = "BTC"
+	ETH    = "ETH"
+	XRP    = "XRP"
+	XLM    = "XLM"
+	MONA   = "MONA"
+	BCH    = "BCH"
+	FX_BTC = "FX_BTC"
 )
 
 type Symbol string

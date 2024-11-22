@@ -17,7 +17,7 @@ func main() {
 	log.Println("Time, CloseTime, kline, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, BUY, SELL")
 	for {
 		bitflyer := &bitflyer.Bitflyer{}
-		symbol := exchange.ETHJPY
+		symbol := exchange.XRPJPY
 
 		exchange.GetKLine(bitflyer, symbol, kline)
 		indicator.GetIndicators(kline)

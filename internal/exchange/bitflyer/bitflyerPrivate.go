@@ -203,7 +203,10 @@ func checkSizeLimit(symbol exchange.Symbol, size float64) float64 {
 		exchange.BCHBTC:    0.01,
 		exchange.FX_BTCJPY: 0.001,
 	}
-	limit := limitMap[symbol]
+	limit, exist := limitMap[symbol]
+	if !exist {
+		panic(fmt.Sprintf("bitflyer not support symbol: %s", symbol))
+	}
 	if size < limit {
 		size = limit
 	}
@@ -214,6 +217,8 @@ func checkSizeLimit(symbol exchange.Symbol, size float64) float64 {
 func (b *Bitflyer) BuyCypto(symbol exchange.Symbol, size float64, price float64) {
 	size = checkSizeLimit(symbol, size)
 	sendChildOrder(symbol, size, price, "BUY", "LIMIT")
+	// sendChildOrder(symbol, size, price, "BUY", "MARKET")
+	log.Printf("BUY, symbol %s, size %f, price %f", symbol, size, price)
 }
 
 func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64) {
@@ -226,6 +231,7 @@ func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64
 
 	// TODO 使用LIMIT
 	sendChildOrder(symbol, _size, price, "SELL", "MARKET")
+	log.Printf("SELL, symbol %s, size %f, price %f", symbol, size, price)
 }
 
 func (b *Bitflyer) SellAllCypto() {
@@ -242,18 +248,26 @@ func (b *Bitflyer) SellAllCypto() {
 			continue
 		}
 
-		var s exchange.Symbol
-		switch balance.CurrencyCode {
-		case exchange.BTC:
-			s = exchange.BTCJPY
-		case exchange.ETH:
-			s = exchange.ETHJPY
-		default:
-			log.Panicf("bitflyer sell all not support: %s", s)
-		}
-
+		s := getSymbolByBalance(balance.CurrencyCode)
 		sendChildOrder(s, balance.Available, 0, "SELL", "MARKET")
 	}
+}
+
+func getSymbolByBalance(balance string) exchange.Symbol {
+	var symbolMap map[string]exchange.Symbol = map[string]exchange.Symbol{
+		"BTC":  exchange.BTCJPY,
+		"XRP":  exchange.XRPJPY,
+		"ETH":  exchange.ETHJPY,
+		"MONA": exchange.MONAJPY,
+		"XLM":  exchange.XLMJPY,
+		// TODO BCH FX
+	}
+
+	val, exist := symbolMap[balance]
+	if !exist {
+		panic(fmt.Sprintf("bitflyer no balance %s", balance))
+	}
+	return val
 }
 
 func sendChildOrder(symbol exchange.Symbol, size float64, price float64, side string, ordertype string) {
