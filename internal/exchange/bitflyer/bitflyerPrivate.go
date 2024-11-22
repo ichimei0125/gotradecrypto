@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"time"
 
@@ -221,6 +222,11 @@ func (b *Bitflyer) BuyCypto(symbol exchange.Symbol, size float64, price float64)
 	log.Printf("BUY, symbol %s, size %f, price %f", symbol, size, price)
 }
 
+func getDotDigits(num float64, digit int) float64 {
+	a := math.Pow10(digit)
+	return float64(int(num*a)) / a
+}
+
 func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64) {
 	// TOOD 考虑size的策略
 	positions, _ := getPositions(getsymbol(symbol))
@@ -228,6 +234,9 @@ func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64
 	for _, position := range positions {
 		_size += position.Size
 	}
+
+	comission := getTradingCommission(getsymbol(symbol))
+	_size = _size - getDotDigits(comission*_size, 8) - 0.00001
 
 	// TODO 使用LIMIT
 	sendChildOrder(symbol, _size, price, "SELL", "MARKET")
@@ -251,6 +260,24 @@ func (b *Bitflyer) SellAllCypto() {
 		s := getSymbolByBalance(balance.CurrencyCode)
 		sendChildOrder(s, balance.Available, 0, "SELL", "MARKET")
 	}
+}
+
+type comission struct {
+	ComissionRate float64 `json:"commission_rate"`
+}
+
+// 手数料
+func getTradingCommission(product_code string) float64 {
+	path := "/v1/me/gettradingcommission" + "?product_code=" + product_code
+
+	res := bitFlyerPrivateAPICore(path, "GET", nil)
+	var _comission comission
+	err := json.Unmarshal([]byte(res), &_comission)
+	if err != nil {
+		fmt.Println("Error: GetTradingCommission", err)
+		return 0.0
+	}
+	return _comission.ComissionRate
 }
 
 func getSymbolByBalance(balance string) exchange.Symbol {
