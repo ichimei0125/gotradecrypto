@@ -223,7 +223,7 @@ func (b *Bitflyer) BuyCypto(symbol exchange.Symbol, size float64, price float64)
 	size = checkSizeLimit(symbol, size)
 	sendChildOrder(symbol, size, price, "BUY", "LIMIT")
 	// sendChildOrder(symbol, size, price, "BUY", "MARKET")
-	size = getDotDigits(size, 5)
+	size = getDotDigits(size, 1)
 
 	log.Printf("BUY, symbol %s, size %f, price %f", symbol, size, price)
 }
