@@ -11,7 +11,7 @@ func buy(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.KLine) {
 
 	c := config.GetConfig()
 	_invest := c.Trade.InvestMoney
-	size := price / float64(_invest)
+	size := float64(_invest) / price
 
 	if e.GetOrderNum(symbol, exchange.ACTIVE, 10, exchange.BUY) == 0 && e.GetOrderNum(symbol, exchange.COMPLETED, 10, exchange.BUY) == 0 {
 		e.BuyCypto(symbol, size, price)
@@ -24,7 +24,7 @@ func sell(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.KLine) {
 
 	c := config.GetConfig()
 	_invest := c.Trade.InvestMoney
-	size := price / float64(_invest)
+	size := float64(_invest) / price
 
 	if e.GetOrderNum(symbol, exchange.ACTIVE, 10, exchange.SELL) == 0 && e.GetOrderNum(symbol, exchange.COMPLETED, 10, exchange.SELL) == 0 {
 		e.SellCypto(symbol, size, price)
