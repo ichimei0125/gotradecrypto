@@ -195,6 +195,20 @@ type sendchildorder struct {
 	TimeInForce    string  `json:"time_in_force"`
 }
 
+// 自定义 JSON 序列化方法
+func (o sendchildorder) MarshalJSON() ([]byte, error) {
+	type Alias sendchildorder // 避免递归调用
+	return json.Marshal(&struct {
+		Price float64 `json:"price"` // 保留两位小数的 Price
+		Size  float64 `json:"size"`  // 保留六位小数的 Size
+		Alias
+	}{
+		Price: math.Round(o.Price*100) / 100,
+		Size:  math.Round(o.Size*1e6) / 1e6,
+		Alias: (Alias)(o),
+	})
+}
+
 // 売買最小単位
 // https://bitflyer.com/ja-jp/s/commission
 func checkSizeLimit(symbol exchange.Symbol, size float64) float64 {
@@ -223,15 +237,14 @@ func (b *Bitflyer) BuyCypto(symbol exchange.Symbol, size float64, price float64)
 	size = checkSizeLimit(symbol, size)
 	sendChildOrder(symbol, size, price, "BUY", "LIMIT")
 	// sendChildOrder(symbol, size, price, "BUY", "MARKET")
-	size = getDotDigits(size, 1)
 
 	log.Printf("BUY, symbol %s, size %f, price %f", symbol, size, price)
 }
 
-func getDotDigits(num float64, digit int) float64 {
-	a := math.Pow10(digit)
-	return float64(int(num*a)) / a
-}
+// func getDotDigits(num float64, digit int) float64 {
+// 	a := math.Pow10(digit)
+// 	return float64(int(num*a)) / a
+// }
 
 func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64) {
 	// TOOD 考虑size的策略
@@ -242,7 +255,7 @@ func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64
 	}
 
 	comission := getTradingCommission(getsymbol(symbol))
-	_size = getDotDigits(_size-comission, 1)
+	_size = _size - comission
 
 	// TODO 使用LIMIT
 	sendChildOrder(symbol, _size, price, "SELL", "MARKET")

@@ -64,6 +64,6 @@ const (
 type Side string
 
 const (
-	BUY  Side = "side"
+	BUY  Side = "buy"
 	SELL Side = "sell"
 )
