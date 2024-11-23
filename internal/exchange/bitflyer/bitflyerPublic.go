@@ -23,6 +23,11 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 
 	for {
 		excutions := FetchExecution(s, 0, oldest_id, 0)
+		if len(excutions) <= 0 {
+			// error
+			*cache = []exchange.KLine{}
+			break
+		}
 		oldest_id = excutions[len(excutions)-1].Id
 
 		new_kline := convertExetutionsToKLine(excutions)
@@ -50,13 +55,16 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 	}
 }
 
-func bitflyerPublicAPICore(url string) *http.Response {
+func bitflyerPublicAPICore(url string) (*http.Response, error) {
 	// TODO impl 制限
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Panicln("cannot get bitflyer public api, maybe limited")
+		wait_minute := 5
+		log.Printf("cannot get bitflyer public api, maybe limited, wait %d minute", wait_minute)
+		time.Sleep(time.Duration(wait_minute) * time.Minute)
+		return nil, err
 	}
-	return resp
+	return resp, nil
 }
 
 func FetchExecution(s exchange.Symbol, count int, before_id int64, after_id int64) []Execution {
@@ -83,7 +91,10 @@ func FetchExecution(s exchange.Symbol, count int, before_id int64, after_id int6
 	}
 	u.RawQuery = q.Encode()
 
-	resp := bitflyerPublicAPICore(u.String())
+	resp, err := bitflyerPublicAPICore(u.String())
+	if err != nil {
+		return []Execution{}
+	}
 	defer resp.Body.Close()
 
 	// // Decode the JSON response into a slice of Executions
