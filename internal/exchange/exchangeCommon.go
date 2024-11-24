@@ -10,7 +10,7 @@ type Exchange interface {
 	SellCypto(symbol Symbol, size float64, price float64)
 	SellAllCypto()
 
-	GetBalance(b Balance) (float64, float64)                                  // amount, avaiable
+	GetBalance(b Balance) (float64, float64)                                  // amount, avaiable (資産総額,発注中以外の金額)
 	GetOrderNum(symbol Symbol, status OrderStatus, minues int, side Side) int // number of special orderstatus
 	CancelAllOrder(symbol Symbol)
 	GetTradeSizeLimit(symbol Symbol) float64
