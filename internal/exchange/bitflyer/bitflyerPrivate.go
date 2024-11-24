@@ -201,7 +201,7 @@ type sendchildorder struct {
 	ProductCode    string  `json:"product_code"`
 	ChildOrderType string  `json:"child_order_type"`
 	Side           string  `json:"side"`
-	Price          float64 `json:"price"`
+	Price          float64 `json:"price,omitempty"`
 	Size           float64 `json:"size"`
 	MinuteToExpire int     `json:"minute_to_expire"`
 	TimeInForce    string  `json:"time_in_force"`
@@ -210,18 +210,29 @@ type sendchildorder struct {
 // 自定义 JSON 序列化方法
 func (o sendchildorder) MarshalJSON() ([]byte, error) {
 	type Alias sendchildorder // 避免递归调用
+	if o.ChildOrderType == "MARKET" {
+		return json.Marshal(&struct {
+			ProductCode    string  `json:"product_code"`
+			ChildOrderType string  `json:"child_order_type"`
+			Side           string  `json:"side"`
+			Size           float64 `json:"size"`
+			MinuteToExpire int     `json:"minute_to_expire"`
+			TimeInForce    string  `json:"time_in_force"`
+		}{
+			ProductCode:    o.ProductCode,
+			ChildOrderType: o.ChildOrderType,
+			Side:           o.Side,
+			Size:           math.Round(o.Size*1e6) / 1e6, // 保留6位小数
+			MinuteToExpire: o.MinuteToExpire,
+			TimeInForce:    o.TimeInForce,
+		})
+	}
+
 	return json.Marshal(&struct {
-		Price float64 `json:"price"` // 保留两位小数的 Price
-		Size  float64 `json:"size"`  // 保留六位小数的 Size
+		Price float64 `json:"price"` // 保留 Price 字段
 		Alias
 	}{
-		Price: func() float64 {
-			if o.ChildOrderType == "MARKET" {
-				return 0 // 如果是 MARKET，Price 强制为 0
-			}
-			return math.Round(o.Price*100) / 100
-		}(),
-		Size:  math.Round(o.Size*1e6) / 1e6,
+		Price: math.Round(o.Price*100) / 100, // 保留2位小数
 		Alias: (Alias)(o),
 	})
 }
