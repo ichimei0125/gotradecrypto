@@ -304,7 +304,10 @@ func (b *Bitflyer) SellAllCypto() {
 		if balance.CurrencyCode == exchange.JPY {
 			continue
 		}
-		s := getSymbolByBalance(balance.CurrencyCode)
+		s, exist := getSymbolByBalance(balance.CurrencyCode)
+		if !exist {
+			continue
+		}
 		if balance.Available <= b.GetTradeSizeLimit(s)*2 {
 			// 資産不足
 			continue
@@ -334,7 +337,7 @@ func getTradingCommission(product_code string) float64 {
 	return _comission.ComissionRate
 }
 
-func getSymbolByBalance(balance string) exchange.Symbol {
+func getSymbolByBalance(balance string) (exchange.Symbol, bool) {
 	var symbolMap map[string]exchange.Symbol = map[string]exchange.Symbol{
 		"BTC":  exchange.BTCJPY,
 		"XRP":  exchange.XRPJPY,
@@ -345,10 +348,11 @@ func getSymbolByBalance(balance string) exchange.Symbol {
 	}
 
 	val, exist := symbolMap[balance]
-	if !exist {
-		panic(fmt.Sprintf("bitflyer no balance %s", balance))
-	}
-	return val
+	return val, exist
+	// if !exist {
+	// 	panic(fmt.Sprintf("bitflyer no balance %s", balance))
+	// }
+	// return val
 }
 
 func sendChildOrder(symbol exchange.Symbol, size float64, price float64, side string, ordertype string) {
