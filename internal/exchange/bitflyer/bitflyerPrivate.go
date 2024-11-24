@@ -215,7 +215,12 @@ func (o sendchildorder) MarshalJSON() ([]byte, error) {
 		Size  float64 `json:"size"`  // 保留六位小数的 Size
 		Alias
 	}{
-		Price: math.Round(o.Price*100) / 100,
+		Price: func() float64 {
+			if o.ChildOrderType == "MARKET" {
+				return 0 // 如果是 MARKET，Price 强制为 0
+			}
+			return math.Round(o.Price*100) / 100
+		}(),
 		Size:  math.Round(o.Size*1e6) / 1e6,
 		Alias: (Alias)(o),
 	})
@@ -272,7 +277,7 @@ func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64
 	}
 
 	// TODO 使用LIMIT
-	sendChildOrder(symbol, _size, price, "SELL", "MARKET")
+	sendChildOrder(symbol, _size, price, "SELL", "LIMIT")
 	log.Printf("SELL, symbol %s, size %f, price %f", symbol, _size, price)
 }
 
