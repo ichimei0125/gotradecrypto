@@ -286,12 +286,15 @@ func (b *Bitflyer) SellAllCypto() {
 		if balance.CurrencyCode == exchange.JPY {
 			continue
 		}
-		if balance.Available <= 0.0 {
+		s := getSymbolByBalance(balance.CurrencyCode)
+		if balance.Available <= b.GetTradeSizeLimit(s)*2 {
+			// 資産不足
 			continue
 		}
 
-		s := getSymbolByBalance(balance.CurrencyCode)
-		sendChildOrder(s, balance.Available, 0, "SELL", "MARKET")
+		size := balance.Available * (1 - getTradingCommission(getsymbol(s)))
+
+		sendChildOrder(s, size, 0, "SELL", "MARKET")
 	}
 }
 
