@@ -15,7 +15,7 @@ func buy(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.KLine) {
 	size := float64(_invest) / price
 
 	const sameKLineIntervalBuyTimes int = 2
-	if e.GetOrderNum(symbol, exchange.ACTIVE, common.KLINE_INTERVAL, exchange.BUY) < sameKLineIntervalBuyTimes && e.GetOrderNum(symbol, exchange.COMPLETED, common.KLINE_INTERVAL, exchange.BUY) <= sameKLineIntervalBuyTimes {
+	if e.GetOrderNum(symbol, exchange.ACTIVE, common.KLINE_INTERVAL, exchange.BUY) < sameKLineIntervalBuyTimes && e.GetOrderNum(symbol, exchange.COMPLETED, common.KLINE_INTERVAL, exchange.BUY) < sameKLineIntervalBuyTimes {
 		e.BuyCypto(symbol, size, price)
 	}
 }

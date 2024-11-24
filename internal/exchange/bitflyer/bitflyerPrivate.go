@@ -115,37 +115,44 @@ func getbalancevalue(b exchange.Balance) string {
 
 func (b *Bitflyer) GetOrderNum(symbol exchange.Symbol, status exchange.OrderStatus, minues int, side exchange.Side) int {
 	cnt := 0
-	childorders := getChildOrders(getsymbol(symbol), getorderstatus(status))
+	childorders := getChildOrders(getsymbol(symbol), getOrderStatus(status))
 
 	time_after := common.GetUTCNow().Add(time.Duration(-minues) * time.Minute)
 
 	for _, order := range childorders {
-		if order.ChildOrderDate.After(time_after) && order.Side == sideMap[side] {
+		if order.ChildOrderDate.After(time_after) && order.Side == getSide(side) {
 			cnt += 1
 		}
 	}
 	return cnt
 }
 
-var sideMap map[exchange.Side]string = map[exchange.Side]string{
-	exchange.BUY:  "BUY",
-	exchange.SELL: "SELL",
-}
-
-func getorderstatus(status exchange.OrderStatus) string {
-	switch status {
-	case exchange.ACTIVE:
-		return "ACTIVE"
-	case exchange.COMPLETED:
-		return "COMPLETED"
-	case exchange.CANCELED:
-		return "CANCELED"
-	case exchange.REJECTED:
-		return "REJECTED"
-	default:
-		panic(fmt.Sprintf("bitflyer err orderstatus %s", status))
+func getSide(side exchange.Side) string {
+	sideMap := map[exchange.Side]string{
+		exchange.BUY:  "BUY",
+		exchange.SELL: "SELL",
 	}
 
+	if side, exist := sideMap[side]; exist {
+		return side
+	}
+
+	panic(fmt.Sprintf("bitflyer no side %s", side))
+}
+
+func getOrderStatus(status exchange.OrderStatus) string {
+	statusMap := map[exchange.OrderStatus]string{
+		exchange.ACTIVE:    "ACTIVE",
+		exchange.COMPLETED: "COMPLETED",
+		exchange.CANCELED:  "CANCELED",
+		exchange.REJECTED:  "REJECTED",
+	}
+
+	if s, exist := statusMap[status]; exist {
+		return s
+	}
+
+	panic(fmt.Sprintf("bitflyer err orderstatus %s", status))
 }
 
 // 注文状態
@@ -252,14 +259,11 @@ func (b *Bitflyer) BuyCypto(symbol exchange.Symbol, size float64, price float64)
 
 func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64) {
 	// TOOD 考虑size的策略
-	positions, _ := getPositions(getsymbol(symbol))
-	var _size float64 = 0
-	for _, position := range positions {
-		_size += position.Size
-	}
+	coin, _ := exchange.GetTradePair(symbol)
+	_, coin_available := b.GetBalance(coin)
 
 	comission := getTradingCommission(getsymbol(symbol))
-	_size = _size - comission
+	_size := coin_available * (1 - comission)
 
 	_limit := b.GetTradeSizeLimit(symbol)
 	if _size < _limit {
