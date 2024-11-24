@@ -45,12 +45,22 @@ const (
 
 // Return: Sell coin, Buy money (虚拟币， 法币)
 func GetTradePair(symbol Symbol) (Balance, Balance) {
-	switch symbol {
-	case BTCJPY:
-		return BTC, JPY
-	default:
-		panic(fmt.Sprintf("no symbol: %s", symbol))
+	tradePairMap := map[Symbol][2]Balance{
+		BTCJPY:    {BTC, JPY},
+		XRPJPY:    {XRP, JPY},
+		ETHJPY:    {ETH, JPY},
+		XLMJPY:    {XLM, JPY},
+		MONAJPY:   {MONA, JPY},
+		ETHBTC:    {ETH, BTC},
+		BCHBTC:    {BCH, BTC},
+		FX_BTCJPY: {FX_BTC, FX_JPY},
 	}
+
+	if pair, exists := tradePairMap[symbol]; exists {
+		return pair[0], pair[1]
+	}
+
+	panic(fmt.Sprintf("no symbol: %s", symbol))
 }
 
 type OrderStatus string

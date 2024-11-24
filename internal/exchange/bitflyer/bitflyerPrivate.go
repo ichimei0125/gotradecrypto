@@ -96,16 +96,21 @@ func getbalance() ([]balance, error) {
 }
 
 func getbalancevalue(b exchange.Balance) string {
-	switch b {
-	case exchange.JPY:
-		return "JPY"
-	case exchange.BTC:
-		return "BTC"
-	case exchange.ETH:
-		return "ETH"
-	default:
-		panic(fmt.Sprintf("bitflyer err balance %s", b))
+	balanceMap := map[exchange.Balance]string{
+		exchange.JPY:  "JPY",
+		exchange.BTC:  "BTC",
+		exchange.ETH:  "ETH",
+		exchange.XRP:  "XRP",
+		exchange.BCH:  "BCH",
+		exchange.MONA: "MONA",
+		// TODO FX
 	}
+
+	if bStr, exists := balanceMap[b]; exists {
+		return bStr
+	}
+
+	panic(fmt.Sprintf("bitflyer no balance: %s", b))
 }
 
 func (b *Bitflyer) GetOrderNum(symbol exchange.Symbol, status exchange.OrderStatus, minues int, side exchange.Side) int {
