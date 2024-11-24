@@ -168,7 +168,7 @@ func getChildOrders(product_code string, child_order_status string) []childOrder
 	endpoint := "/v1/me/getchildorders"
 	path := endpoint + "?product_code=" + product_code + "&child_order_state=" + child_order_status
 
-	res := bitFlyerPrivateAPICore(path, "GET", nil)
+	res := bitFlyerPrivateAPICore(path, "GET", nil, true)
 	var childorders []childOrder
 	err := json.Unmarshal([]byte(res), &childorders)
 	if err != nil {
@@ -211,7 +211,7 @@ func (o sendchildorder) MarshalJSON() ([]byte, error) {
 
 // 売買最小単位
 // https://bitflyer.com/ja-jp/s/commission
-func checkSizeLimit(symbol exchange.Symbol, size float64) float64 {
+func (b *Bitflyer) GetTradeSizeLimit(symbol exchange.Symbol) float64 {
 	var limitMap map[exchange.Symbol]float64 = map[exchange.Symbol]float64{
 		exchange.BTCJPY:    0.001,
 		exchange.XRPJPY:    0.1,
@@ -226,15 +226,14 @@ func checkSizeLimit(symbol exchange.Symbol, size float64) float64 {
 	if !exist {
 		panic(fmt.Sprintf("bitflyer not support symbol: %s", symbol))
 	}
-	if size < limit {
-		size = limit
-	}
-
-	return size
+	return limit
 }
 
 func (b *Bitflyer) BuyCypto(symbol exchange.Symbol, size float64, price float64) {
-	size = checkSizeLimit(symbol, size)
+	limit := b.GetTradeSizeLimit(symbol)
+	if size < limit {
+		size = limit
+	}
 	sendChildOrder(symbol, size, price, "BUY", "LIMIT")
 	// sendChildOrder(symbol, size, price, "BUY", "MARKET")
 
@@ -256,6 +255,12 @@ func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64
 
 	comission := getTradingCommission(getsymbol(symbol))
 	_size = _size - comission
+
+	_limit := b.GetTradeSizeLimit(symbol)
+	if _size < _limit {
+		// 資産不足
+		return
+	}
 
 	// TODO 使用LIMIT
 	sendChildOrder(symbol, _size, price, "SELL", "MARKET")

@@ -1,6 +1,7 @@
 package trade
 
 import (
+	"github.com/ichimei0125/gotradecrypto/internal/common"
 	"github.com/ichimei0125/gotradecrypto/internal/config"
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 )
@@ -13,7 +14,8 @@ func buy(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.KLine) {
 	_invest := c.Trade.InvestMoney
 	size := float64(_invest) / price
 
-	if e.GetOrderNum(symbol, exchange.ACTIVE, 10, exchange.BUY) == 0 && e.GetOrderNum(symbol, exchange.COMPLETED, 10, exchange.BUY) == 0 {
+	const sameKLineIntervalBuyTimes int = 2
+	if e.GetOrderNum(symbol, exchange.ACTIVE, common.KLINE_INTERVAL, exchange.BUY) < sameKLineIntervalBuyTimes && e.GetOrderNum(symbol, exchange.COMPLETED, common.KLINE_INTERVAL, exchange.BUY) <= sameKLineIntervalBuyTimes {
 		e.BuyCypto(symbol, size, price)
 	}
 }
@@ -26,15 +28,23 @@ func sell(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.KLine) {
 	_invest := c.Trade.InvestMoney
 	size := float64(_invest) / price
 
-	if e.GetOrderNum(symbol, exchange.ACTIVE, 10, exchange.SELL) == 0 && e.GetOrderNum(symbol, exchange.COMPLETED, 10, exchange.SELL) == 0 {
+	const sameKLineIntervalSellTimes int = 1
+	if e.GetOrderNum(symbol, exchange.ACTIVE, common.KLINE_INTERVAL, exchange.SELL) < sameKLineIntervalSellTimes && e.GetOrderNum(symbol, exchange.COMPLETED, common.KLINE_INTERVAL, exchange.SELL) < sameKLineIntervalSellTimes {
 		e.SellCypto(symbol, size, price)
 	}
 }
 
-func losscut(e exchange.Exchange) bool {
-	amount, _ := e.GetBalance(exchange.JPY)
+func losscut(e exchange.Exchange, symbol exchange.Symbol) bool {
+	coin, money := exchange.GetTradePair(symbol)
+
+	// TODO 多币种支持
+
+	money_amount, _ := e.GetBalance(money)
+	coin_amount, _ := e.GetBalance(coin)
+	size_limit := e.GetTradeSizeLimit(symbol)
+
 	c := config.GetConfig()
-	if amount < float64(c.Trade.CutLoss) {
+	if money_amount <= float64(c.Trade.CutLoss) && coin_amount < size_limit*2 {
 		e.SellAllCypto()
 		return true
 	}

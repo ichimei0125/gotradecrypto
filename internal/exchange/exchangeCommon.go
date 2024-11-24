@@ -13,6 +13,7 @@ type Exchange interface {
 	GetBalance(b Balance) (float64, float64)                                  // amount, avaiable
 	GetOrderNum(symbol Symbol, status OrderStatus, minues int, side Side) int // number of special orderstatus
 	CancelAllOrder(symbol Symbol)
+	GetTradeSizeLimit(symbol Symbol) float64
 }
 
 type Balance string
@@ -42,7 +43,7 @@ const (
 	FX_BTCJPY Symbol = "FX_BTC_JPY"
 )
 
-// Return: Sell coin, Buy money
+// Return: Sell coin, Buy money (虚拟币， 法币)
 func GetTradePair(symbol Symbol) (Balance, Balance) {
 	switch symbol {
 	case BTCJPY:
