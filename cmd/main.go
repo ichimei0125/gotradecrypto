@@ -14,7 +14,7 @@ import (
 func main() {
 	var kline *[]exchange.KLine = &[]exchange.KLine{}
 
-	log.Println("Time, CloseTime, kline, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, BUY, SELL")
+	log.Println("Time, CloseTime, kline, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, BUY, SELL")
 	for {
 		bitflyer := &bitflyer.Bitflyer{}
 		symbol := exchange.XRPJPY

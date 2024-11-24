@@ -7,4 +7,5 @@ func GetIndicators(data *[]exchange.KLine) {
 	ema(data, 20)
 	bbands(data, 20)
 	stochastic(data)
+	maSlope(data, 14)
 }
