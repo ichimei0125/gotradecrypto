@@ -54,8 +54,8 @@ func minFloat64(slice []float64) float64 {
 func slope(data []float64) float64 {
 	// 计算最近几个点的平均斜率
 	totalSlope := 0.0
-	for i := len(data) - 1; i > 0; i-- {
-		totalSlope += data[i] - data[i-1]
+	for i := 0; i < len(data)-1; i++ {
+		totalSlope += data[i] - data[i+1]
 	}
 	avgSlope := totalSlope / float64(len(data)-1)
 
