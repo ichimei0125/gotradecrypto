@@ -230,9 +230,11 @@ func (o sendchildorder) MarshalJSON() ([]byte, error) {
 
 	return json.Marshal(&struct {
 		Price float64 `json:"price"` // 保留 Price 字段
+		Size  float64 `json:"size"`  // 保留 Size 字段
 		Alias
 	}{
 		Price: math.Round(o.Price*100) / 100, // 保留2位小数
+		Size:  math.Round(o.Size*1e6) / 1e6,  // 保留6位小数
 		Alias: (Alias)(o),
 	})
 }
