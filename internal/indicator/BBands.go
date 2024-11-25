@@ -16,3 +16,25 @@ func bbands(data *[]exchange.KLine, period int) {
 		d[i].BBands_Minus_3K = d[i].SMA - 3*standardDeviation(closes)
 	}
 }
+
+func maSlope(data *[]exchange.KLine, period int) {
+	d := *data
+
+	for i := 0; i < len(d)-period; i++ {
+		tmp_data := make([]float64, period)
+		is_nodata := false
+		for index, _d := range d[i : i+period] {
+			if _d.SMA == 0.0 {
+				is_nodata = true
+				break
+			}
+			tmp_data[index] = _d.SMA
+		}
+
+		if is_nodata {
+			continue
+		}
+		d[i].SMASlope = slope(tmp_data)
+	}
+
+}

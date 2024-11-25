@@ -201,7 +201,7 @@ type sendchildorder struct {
 	ProductCode    string  `json:"product_code"`
 	ChildOrderType string  `json:"child_order_type"`
 	Side           string  `json:"side"`
-	Price          float64 `json:"price"`
+	Price          float64 `json:"price,omitempty"`
 	Size           float64 `json:"size"`
 	MinuteToExpire int     `json:"minute_to_expire"`
 	TimeInForce    string  `json:"time_in_force"`
@@ -210,13 +210,31 @@ type sendchildorder struct {
 // 自定义 JSON 序列化方法
 func (o sendchildorder) MarshalJSON() ([]byte, error) {
 	type Alias sendchildorder // 避免递归调用
+	if o.ChildOrderType == "MARKET" {
+		return json.Marshal(&struct {
+			ProductCode    string  `json:"product_code"`
+			ChildOrderType string  `json:"child_order_type"`
+			Side           string  `json:"side"`
+			Size           float64 `json:"size"`
+			MinuteToExpire int     `json:"minute_to_expire"`
+			TimeInForce    string  `json:"time_in_force"`
+		}{
+			ProductCode:    o.ProductCode,
+			ChildOrderType: o.ChildOrderType,
+			Side:           o.Side,
+			Size:           math.Round(o.Size*1e6) / 1e6, // 保留6位小数
+			MinuteToExpire: o.MinuteToExpire,
+			TimeInForce:    o.TimeInForce,
+		})
+	}
+
 	return json.Marshal(&struct {
-		Price float64 `json:"price"` // 保留两位小数的 Price
-		Size  float64 `json:"size"`  // 保留六位小数的 Size
+		Price float64 `json:"price"` // 保留 Price 字段
+		Size  float64 `json:"size"`  // 保留 Size 字段
 		Alias
 	}{
-		Price: math.Round(o.Price*100) / 100,
-		Size:  math.Round(o.Size*1e6) / 1e6,
+		Price: math.Round(o.Price*100) / 100, // 保留2位小数
+		Size:  math.Round(o.Size*1e6) / 1e6,  // 保留6位小数
 		Alias: (Alias)(o),
 	})
 }
@@ -272,7 +290,7 @@ func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64
 	}
 
 	// TODO 使用LIMIT
-	sendChildOrder(symbol, _size, price, "SELL", "MARKET")
+	sendChildOrder(symbol, _size, price, "SELL", "LIMIT")
 	log.Printf("SELL, symbol %s, size %f, price %f", symbol, _size, price)
 }
 
@@ -286,7 +304,10 @@ func (b *Bitflyer) SellAllCypto() {
 		if balance.CurrencyCode == exchange.JPY {
 			continue
 		}
-		s := getSymbolByBalance(balance.CurrencyCode)
+		s, exist := getSymbolByBalance(balance.CurrencyCode)
+		if !exist {
+			continue
+		}
 		if balance.Available <= b.GetTradeSizeLimit(s)*2 {
 			// 資産不足
 			continue
@@ -316,7 +337,7 @@ func getTradingCommission(product_code string) float64 {
 	return _comission.ComissionRate
 }
 
-func getSymbolByBalance(balance string) exchange.Symbol {
+func getSymbolByBalance(balance string) (exchange.Symbol, bool) {
 	var symbolMap map[string]exchange.Symbol = map[string]exchange.Symbol{
 		"BTC":  exchange.BTCJPY,
 		"XRP":  exchange.XRPJPY,
@@ -327,10 +348,11 @@ func getSymbolByBalance(balance string) exchange.Symbol {
 	}
 
 	val, exist := symbolMap[balance]
-	if !exist {
-		panic(fmt.Sprintf("bitflyer no balance %s", balance))
-	}
-	return val
+	return val, exist
+	// if !exist {
+	// 	panic(fmt.Sprintf("bitflyer no balance %s", balance))
+	// }
+	// return val
 }
 
 func sendChildOrder(symbol exchange.Symbol, size float64, price float64, side string, ordertype string) {
