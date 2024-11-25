@@ -29,5 +29,8 @@
         <key>StandardErrorPath</key>
         <string>/Users/shi/workspace/Github/ichimei0125/gotradecypto/log/main.stderr</string>
 
+        <key>ThrottleInterval</key>
+        <integer>305</integer>
+
     </dict>
 </plist>
