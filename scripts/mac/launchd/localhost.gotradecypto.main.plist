@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <!-- 描述任务 -->
+        <key>Label</key>
+        <string>localhost.gotradecypto.main</string>
+
+        <!-- 设置工作目录 -->
+        <key>WorkingDirectory</key>
+        <string>/Users/shi/workspace/Github/ichimei0125/gotradecypto</string>
+
+        <key>UserName</key>
+        <string>shi</string>
+
+        <!-- 可执行文件路径 -->
+        <key>Program</key>
+        <string>/Users/shi/workspace/Github/ichimei0125/gotradecypto/gotradecypto</string>
+
+        <!-- 即使系统处于睡眠状态也运行 -->
+        <key>KeepAlive</key>
+        <true />
+
+        <key>RunAtLoad</key>
+        <true />
+
+        <key>StandardOutPath</key>
+        <string>/Users/shi/workspace/Github/ichimei0125/gotradecypto/log/main.stdout</string>
+        <key>StandardErrorPath</key>
+        <string>/Users/shi/workspace/Github/ichimei0125/gotradecypto/log/main.stderr</string>
+
+    </dict>
+</plist>
