@@ -3,6 +3,7 @@ package bitflyer
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -59,9 +60,10 @@ func bitflyerPublicAPICore(url string) (*http.Response, error) {
 	// TODO impl 制限
 	resp, err := http.Get(url)
 	if err != nil {
-		wait_minute := 5
-		log.Printf("cannot get bitflyer public api, maybe limited, wait %d minute", wait_minute)
-		time.Sleep(time.Duration(wait_minute) * time.Minute)
+		// wait_minute := 5
+		// log.Printf("cannot get bitflyer public api, maybe limited, wait %d minute", wait_minute)
+		log.Printf("cannot get bitflyer public api, maybe limited")
+		// time.Sleep(time.Duration(wait_minute) * time.Minute)
 		return nil, err
 	}
 	return resp, nil
@@ -100,7 +102,9 @@ func FetchExecution(s exchange.Symbol, count int, before_id int64, after_id int6
 	// // Decode the JSON response into a slice of Executions
 	var executions []Execution
 	if err := json.NewDecoder(resp.Body).Decode(&executions); err != nil {
-		panic("wrong bitflyer public response json")
+		b, _ := io.ReadAll(resp.Body)
+
+		panic(fmt.Sprintf("wrong bitflyer public response json:\n%s", string(b)))
 	}
 
 	return executions
