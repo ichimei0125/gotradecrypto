@@ -19,9 +19,9 @@ func main() {
 	// signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 
 	// go func() {
+	var kline *[]exchange.KLine = &[]exchange.KLine{}
 	log.Println("Time, CloseTime, kline, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, BUY, SELL")
 	for {
-		var kline *[]exchange.KLine = &[]exchange.KLine{}
 		bitflyer := &bitflyer.Bitflyer{}
 		symbol := exchange.XRPJPY
 
