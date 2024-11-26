@@ -14,8 +14,12 @@
         <string>shi</string>
 
         <!-- 可执行文件路径 -->
-        <key>Program</key>
-        <string>/Users/shi/workspace/Github/ichimei0125/gotradecypto/gotradecypto</string>
+        <key>ProgramArguments</key>
+        <array>
+            <string>/usr/bin/caffeinate</string>
+            <string>-i</string>
+            <string>/Users/shi/workspace/Github/ichimei0125/gotradecypto/gotradecypto</string>
+        </array>
 
         <!-- 即使系统处于睡眠状态也运行 -->
         <key>KeepAlive</key>
