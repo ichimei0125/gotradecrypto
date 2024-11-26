@@ -20,10 +20,11 @@ func main() {
 
 	// go func() {
 	var kline *[]exchange.KLine = &[]exchange.KLine{}
+	bitflyer := &bitflyer.Bitflyer{}
+	symbol := exchange.XRPJPY
+
 	log.Println("Time, CloseTime, kline, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, BUY, SELL")
 	for {
-		bitflyer := &bitflyer.Bitflyer{}
-		symbol := exchange.XRPJPY
 
 		exchange.GetKLine(bitflyer, symbol, kline)
 		indicator.GetIndicators(kline)
