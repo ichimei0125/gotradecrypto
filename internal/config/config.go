@@ -19,8 +19,14 @@ type Config struct {
 }
 
 func GetConfig() Config {
+	// 从环境变量读取配置文件路径
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		configPath = "config.yaml" // 默认值
+	}
+
 	// 读取配置文件
-	data, err := os.ReadFile("config.yaml")
+	data, err := os.ReadFile(configPath)
 	if err != nil {
 		log.Fatalf("error reading config file: %v", err)
 	}
