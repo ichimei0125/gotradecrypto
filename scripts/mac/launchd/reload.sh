@@ -1,5 +1,7 @@
 #! /bin/sh
 
+go build -o gotradecypto cmd/main.go
+
 sudo launchctl list | grep gotradecypto
 sudo launchctl bootout system/localhost.gotradecypto.main
 sudo launchctl list | grep gotradecypto
