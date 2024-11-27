@@ -26,7 +26,7 @@ func main() {
 		{&bitflyer.Bitflyer{}, klineBitflyerXRPJPY, exchange.XRPJPY},
 	}
 
-	fmt.Println("Time, CloseTime, kline, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, BUY, SELL")
+	fmt.Println("Time, CloseTime, kline, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, RSI, BUY, SELL")
 	for {
 
 		for _, t := range trades {

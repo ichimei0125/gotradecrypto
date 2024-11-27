@@ -23,6 +23,7 @@ type KLine struct {
 	SlowK           float64
 	SlowD           float64
 	SMASlope        float64
+	RSI             float64
 }
 
 func SumClose(klines []KLine) float64 {
