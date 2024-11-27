@@ -17,25 +17,25 @@ func main() {
 
 	// bitflyer xprjpy
 	var klineBitflyerXRPJPY *[]exchange.KLine = &[]exchange.KLine{}
-	bitflyerXRPJPY := &bitflyer.Bitflyer{}
-	bitflyerxrpjpy := exchange.XRPJPY
 
 	trades := []struct {
 		exchange exchange.Exchange
 		kine     *[]exchange.KLine
 		symbol   exchange.Symbol
 	}{
-		{bitflyerXRPJPY, klineBitflyerXRPJPY, bitflyerxrpjpy},
+		{&bitflyer.Bitflyer{}, klineBitflyerXRPJPY, exchange.XRPJPY},
 	}
 
 	fmt.Println("Time, CloseTime, kline, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, BUY, SELL")
 	for {
 
 		for _, t := range trades {
-			t.exchange.FetchKLine(t.symbol, t.kine)
-			indicator.GetIndicators(t.kine)
+			go func() {
+				t.exchange.FetchKLine(t.symbol, t.kine)
+				indicator.GetIndicators(t.kine)
 
-			go trade.Trade(t.exchange, t.symbol, t.kine)
+				go trade.Trade(t.exchange, t.symbol, t.kine)
+			}()
 		}
 
 		// sleep

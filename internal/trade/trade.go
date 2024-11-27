@@ -2,6 +2,7 @@ package trade
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/ichimei0125/gotradecrypto/internal/config"
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
@@ -17,16 +18,16 @@ const (
 
 func Trade(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.KLine) {
 	d := *data
+	c := config.GetConfig()
 
 	var output_buy, output_sell int = 0, 0
 
-	if losscut(e, symbol) {
+	if !c.DryRun && losscut(e, symbol) {
 		output_buy, output_sell = -1, -1
 		return
 	}
 
 	status := tradestrategy(data)
-	c := config.GetConfig()
 
 	switch status {
 	case BUY:
@@ -43,6 +44,5 @@ func Trade(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.KLine) 
 		output_buy, output_sell = 0, 0
 	}
 
-	fmt.Printf(",%s, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %d, %d", d[1].OpenTime, d[1].Open, d[1].SMA, d[1].EMA, d[1].BBands_Plus_3K, d[1].BBands_Plus_2K, d[1].BBands_Minus_2K, d[1].BBands_Minus_3K, d[1].SlowK, d[1].SlowD, d[1].SMASlope, output_buy, output_sell)
-
+	fmt.Printf("%s ,%s, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %d, %d", time.Now(), d[1].OpenTime, d[1].Open, d[1].SMA, d[1].EMA, d[1].BBands_Plus_3K, d[1].BBands_Plus_2K, d[1].BBands_Minus_2K, d[1].BBands_Minus_3K, d[1].SlowK, d[1].SlowD, d[1].SMASlope, output_buy, output_sell)
 }
