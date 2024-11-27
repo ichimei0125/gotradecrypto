@@ -16,12 +16,13 @@ type Config struct {
 		InvestMoney int `yaml:"invest_money"`
 		CutLoss     int `yaml:"cut_loss"`
 	} `yaml:"trade"`
+	DryRun bool `yaml:"dry_run"`
 }
 
 func GetConfig() Config {
 	// 从环境变量读取配置文件路径
-	configPath := os.Getenv("CONFIG_PATH")
-	if configPath == "" {
+	configPath, exist := os.LookupEnv("CONFIG_PATH")
+	if !exist {
 		configPath = "config.yaml" // 默认值
 	}
 

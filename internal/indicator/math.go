@@ -5,14 +5,6 @@ import (
 	"sort"
 )
 
-func calculateSMA(values []float64) float64 {
-	sum := 0.0
-	for _, v := range values {
-		sum += v
-	}
-	return sum / float64(len(values))
-}
-
 // 计算平均值
 func mean(data []float64) float64 {
 	sum := 0.0
@@ -60,4 +52,17 @@ func slope(data []float64) float64 {
 	avgSlope := totalSlope / float64(len(data)-1)
 
 	return avgSlope
+}
+
+func roundAt(num float64, p int) float64 {
+	a := math.Pow10(p)
+	return math.Round(num*a) / a
+}
+
+func reverseArray(arr []float64) []float64 {
+	reversed := make([]float64, len(arr))
+	for i := 0; i < len(arr); i++ {
+		reversed[len(arr)-1-i] = arr[i]
+	}
+	return reversed
 }

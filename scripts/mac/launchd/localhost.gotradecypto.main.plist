@@ -8,7 +8,7 @@
 
         <!-- 设置工作目录 -->
         <key>WorkingDirectory</key>
-        <string>/Users/shi/workspace/Github/ichimei0125/gotradecypto</string>
+        <string>/Users/shi/workspace/Github/gotradecypto</string>
 
         <key>UserName</key>
         <string>shi</string>
@@ -19,7 +19,7 @@
         <key>ProgramArguments</key>
         <array>
             <string>-i</string>
-            <string>/Users/shi/workspace/Github/ichimei0125/gotradecypto/gotradecypto</string>
+            <string>/Users/shi/workspace/Github/gotradecypto/gotradecypto</string>
         </array>
 
         <!-- 即使系统处于睡眠状态也运行 -->
@@ -30,9 +30,9 @@
         <true />
 
         <key>StandardOutPath</key>
-        <string>/Users/shi/workspace/Github/ichimei0125/gotradecypto/log/main.stdout</string>
+        <string>/Users/shi/workspace/Github/gotradecypto/log/main.stdout</string>
         <key>StandardErrorPath</key>
-        <string>/Users/shi/workspace/Github/ichimei0125/gotradecypto/log/main.stderr</string>
+        <string>/Users/shi/workspace/Github/gotradecypto/log/main.stderr</string>
 
         <key>ThrottleInterval</key>
         <integer>305</integer>

@@ -1,42 +1,49 @@
 package main
 
 import (
-	"log"
+	"sync"
 	"time"
 
 	"github.com/ichimei0125/gotradecrypto/internal/common"
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 	"github.com/ichimei0125/gotradecrypto/internal/exchange/bitflyer"
 	"github.com/ichimei0125/gotradecrypto/internal/indicator"
+	"github.com/ichimei0125/gotradecrypto/internal/logger"
 	"github.com/ichimei0125/gotradecrypto/internal/trade"
 )
 
 func main() {
-	// log.Println("GoTradeCypto started")
+	logger.InitLogger("log/app.log", 10, 5, 30, true)
 
-	// // 捕获信号
-	// stop := make(chan os.Signal, 1)
-	// signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
+	// bitflyer xprjpy
+	var klineBitflyerXRPJPY *[]exchange.KLine = &[]exchange.KLine{}
 
-	// go func() {
-	var kline *[]exchange.KLine = &[]exchange.KLine{}
-	bitflyer := &bitflyer.Bitflyer{}
-	symbol := exchange.XRPJPY
+	trades := []struct {
+		exchange exchange.Exchange
+		kine     *[]exchange.KLine
+		symbol   exchange.Symbol
+	}{
+		{&bitflyer.Bitflyer{}, klineBitflyerXRPJPY, exchange.XRPJPY},
+	}
 
-	log.Println("Time, CloseTime, kline, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, BUY, SELL")
+	logger.Info("Time, CloseTime, kline, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, RSI, BUY, SELL")
+	wg := &sync.WaitGroup{}
 	for {
+		wg.Add(len(trades))
 
-		exchange.GetKLine(bitflyer, symbol, kline)
-		indicator.GetIndicators(kline)
+		for _, t := range trades {
+			localT := t // 闭包变量捕获问题
+			go func(wg *sync.WaitGroup) {
+				defer wg.Done()
+				localT.exchange.FetchKLine(localT.symbol, localT.kine)
+				indicator.GetIndicators(localT.kine)
 
-		go trade.Trade(bitflyer, symbol, kline)
+				go trade.Trade(localT.exchange, localT.symbol, localT.kine)
+			}(wg)
+		}
 
+		wg.Wait()
 		// sleep
 		time.Sleep(time.Duration(common.REFRESH_INTERVAL) * time.Minute)
 	}
-
-	// }()
-
-	// <-stop
-	// log.Println("GoTradeCypto stopped")
 }

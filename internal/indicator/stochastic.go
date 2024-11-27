@@ -6,11 +6,8 @@ import (
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 )
 
-func stochastic(data *[]exchange.KLine) {
+func stochastic(data *[]exchange.KLine, period int, kSmoothingPeriod int, dSmoothingPeriod int) {
 	d := *data
-	period := 14
-	kSmoothingPeriod := 1
-	DSmoothingPeriod := 3
 
 	RSV := make([]float64, len(d))
 	L := make([]float64, len(d))
@@ -34,7 +31,7 @@ func stochastic(data *[]exchange.KLine) {
 	}
 
 	alpha_K := math.Round(2.0/float64(kSmoothingPeriod+1)*1000) / 1000 // 小数点後３位
-	alpha_D := math.Round(2.0/float64(DSmoothingPeriod+1)*1000) / 1000 // 小数点後３位
+	alpha_D := math.Round(2.0/float64(dSmoothingPeriod+1)*1000) / 1000 // 小数点後３位
 	for i := start_index; i >= 0; i-- {
 		if d[i+1].SlowK == 0.0 {
 			d[i+1].SlowK = 0.5
