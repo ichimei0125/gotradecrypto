@@ -35,7 +35,7 @@ func InitLogger(logFilePath string, maxSize, maxBackups, maxAge int, compress bo
 		}
 
 		// 初始化日志记录器
-		logger = log.New(logWriter, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
+		logger = log.New(logWriter, "", log.Ldate|log.Ltime)
 	})
 }
 
@@ -70,5 +70,13 @@ func Debug(v ...interface{}) {
 		return
 	}
 	logger.SetPrefix("DEBUG: ")
+	logger.Println(v...)
+}
+
+func Print(v ...interface{}) {
+	if logger == nil {
+		log.Println("Use InitLogger")
+		return
+	}
 	logger.Println(v...)
 }

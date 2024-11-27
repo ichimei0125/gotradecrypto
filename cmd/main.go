@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"sync"
 	"time"
 
 	"github.com/ichimei0125/gotradecrypto/internal/common"
@@ -26,18 +26,23 @@ func main() {
 		{&bitflyer.Bitflyer{}, klineBitflyerXRPJPY, exchange.XRPJPY},
 	}
 
-	fmt.Println("Time, CloseTime, kline, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, RSI, BUY, SELL")
+	logger.Info("Time, CloseTime, kline, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, RSI, BUY, SELL")
+	wg := &sync.WaitGroup{}
 	for {
+		wg.Add(len(trades))
 
 		for _, t := range trades {
-			go func() {
-				t.exchange.FetchKLine(t.symbol, t.kine)
-				indicator.GetIndicators(t.kine)
+			localT := t // 闭包变量捕获问题
+			go func(wg *sync.WaitGroup) {
+				defer wg.Done()
+				localT.exchange.FetchKLine(localT.symbol, localT.kine)
+				indicator.GetIndicators(localT.kine)
 
-				go trade.Trade(t.exchange, t.symbol, t.kine)
-			}()
+				go trade.Trade(localT.exchange, localT.symbol, localT.kine)
+			}(wg)
 		}
 
+		wg.Wait()
 		// sleep
 		time.Sleep(time.Duration(common.REFRESH_INTERVAL) * time.Minute)
 	}
