@@ -262,18 +262,13 @@ func (b *Bitflyer) GetTradeSizeLimit(symbol exchange.Symbol) float64 {
 func (b *Bitflyer) BuyCypto(symbol exchange.Symbol, size float64, price float64) {
 	limit := b.GetTradeSizeLimit(symbol)
 	if size < limit {
-		size = limit
+		// お金不足
+		return
 	}
 	sendChildOrder(symbol, size, price, "BUY", "LIMIT")
-	// sendChildOrder(symbol, size, price, "BUY", "MARKET")
 
 	log.Printf("BUY, symbol %s, size %f, price %f", symbol, size, price)
 }
-
-// func getDotDigits(num float64, digit int) float64 {
-// 	a := math.Pow10(digit)
-// 	return float64(int(num*a)) / a
-// }
 
 func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64) {
 	// TOOD 考虑size的策略
@@ -289,7 +284,6 @@ func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64
 		return
 	}
 
-	// TODO 使用LIMIT
 	sendChildOrder(symbol, _size, price, "SELL", "LIMIT")
 	log.Printf("SELL, symbol %s, size %f, price %f", symbol, _size, price)
 }

@@ -16,6 +16,7 @@ type Config struct {
 		InvestMoney int `yaml:"invest_money"`
 		CutLoss     int `yaml:"cut_loss"`
 	} `yaml:"trade"`
+	DryRun bool `yaml:"dry_run"`
 }
 
 func GetConfig() Config {

@@ -7,7 +7,7 @@ import "github.com/ichimei0125/gotradecrypto/internal/exchange"
 //	data[2].bbands in, data[1].bbands out
 //	AND
 //	data[1] slowD <20(for buy)/ >80(for sell) OR slowK > slowD(for buy)
-func strategy1(data *[]exchange.KLine) TradeStatus {
+func tradestrategy(data *[]exchange.KLine) TradeStatus {
 	d := *data
 
 	const stoch_down float64 = 25
