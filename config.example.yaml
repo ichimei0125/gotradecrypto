@@ -5,5 +5,6 @@ bitflyer:
 trade:
   invest_money: 10000
   cut_loss: 57000
+  safe_money: 40000
 
 dry_run: true

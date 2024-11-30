@@ -15,6 +15,7 @@ type Config struct {
 	Trade struct {
 		InvestMoney int `yaml:"invest_money"`
 		CutLoss     int `yaml:"cut_loss"`
+		SafeMoney   int `yaml:"save_money"`
 	} `yaml:"trade"`
 	DryRun bool `yaml:"dry_run"`
 }

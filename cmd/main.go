@@ -15,7 +15,9 @@ import (
 func main() {
 	logger.InitLogger("log/app.log", 10, 5, 30, true)
 
-	// bitflyer xprjpy
+	// bitflyer
+	var _bitflyer = new(bitflyer.Bitflyer)
+	// bitflyer xrpjpy
 	var klineBitflyerXRPJPY *[]exchange.KLine = &[]exchange.KLine{}
 
 	trades := []struct {
@@ -23,11 +25,11 @@ func main() {
 		kine     *[]exchange.KLine
 		symbol   exchange.Symbol
 	}{
-		{&bitflyer.Bitflyer{}, klineBitflyerXRPJPY, exchange.XRPJPY},
+		{_bitflyer, klineBitflyerXRPJPY, exchange.XRPJPY},
 	}
 
-	logger.Info("Time, CloseTime, kline, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, RSI, BUY, SELL")
-	wg := &sync.WaitGroup{}
+	logger.Info("Time, CloseTime, PriceNow, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, RSI, BUY, SELL")
+	wg := new(sync.WaitGroup)
 	for {
 		wg.Add(len(trades))
 

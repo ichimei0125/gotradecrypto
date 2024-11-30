@@ -35,7 +35,7 @@ func sell(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.KLine) {
 }
 
 func losscut(e exchange.Exchange, symbol exchange.Symbol) bool {
-	coin, money := exchange.GetTradePair(symbol)
+	coin, money := symbol.GetTradePair()
 
 	// TODO 多币种支持
 

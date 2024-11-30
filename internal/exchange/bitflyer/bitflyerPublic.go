@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"sort"
@@ -62,9 +61,9 @@ func bitflyerPublicAPICore(url string) (*http.Response, error) {
 	if err != nil {
 		// wait_minute := 5
 		// log.Printf("cannot get bitflyer public api, maybe limited, wait %d minute", wait_minute)
-		log.Printf("cannot get bitflyer public api, maybe limited")
+		panic(fmt.Sprintf("cannot get bitflyer public api, maybe limited \n %s", err.Error()))
 		// time.Sleep(time.Duration(wait_minute) * time.Minute)
-		return nil, err
+		// return nil, err
 	}
 	return resp, nil
 }

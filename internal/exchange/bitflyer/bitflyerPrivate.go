@@ -176,9 +176,26 @@ type childOrder struct {
 	TimeInForce            string     `json:"time_in_force"`
 }
 
+type childOrderAcceptanceID struct {
+	ChildOrderAcceptanceID string `json:"child_order_acceptance_id"`
+}
+
 func getChildOrders(product_code string, child_order_status string) []childOrder {
 	endpoint := "/v1/me/getchildorders"
 	path := endpoint + "?product_code=" + product_code + "&child_order_state=" + child_order_status
+
+	res := bitFlyerPrivateAPICore(path, "GET", nil, true)
+	var childorders []childOrder
+	err := json.Unmarshal([]byte(res), &childorders)
+	if err != nil {
+		panic("ERROR GetChildOrders: " + err.Error())
+	}
+	return childorders
+}
+
+func getChildOrderByID(product_code string, child_order_acceptance_id string) []childOrder {
+	endpoint := "/v1/me/getchildorders"
+	path := endpoint + "?product_code=" + product_code + "&child_order_acceptance_id=" + child_order_acceptance_id
 
 	res := bitFlyerPrivateAPICore(path, "GET", nil, true)
 	var childorders []childOrder
@@ -261,18 +278,22 @@ func (b *Bitflyer) GetTradeSizeLimit(symbol exchange.Symbol) float64 {
 
 func (b *Bitflyer) BuyCypto(symbol exchange.Symbol, size float64, price float64) {
 	limit := b.GetTradeSizeLimit(symbol)
-	if size < limit {
+
+	_, money := symbol.GetTradePair()
+	amount, _ := b.GetBalance(money)
+	c := config.GetConfig()
+
+	if size < limit || amount < float64(c.Trade.SafeMoney) {
 		// お金不足
 		return
 	}
 	sendChildOrder(symbol, size, price, "BUY", "LIMIT")
 
-	log.Printf("BUY, symbol %s, size %f, price %f", symbol, size, price)
 }
 
 func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64) {
 	// TOOD 考虑size的策略
-	coin, _ := exchange.GetTradePair(symbol)
+	coin, _ := symbol.GetTradePair()
 	_, coin_available := b.GetBalance(coin)
 
 	comission := getTradingCommission(getsymbol(symbol))
@@ -284,8 +305,13 @@ func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64
 		return
 	}
 
-	sendChildOrder(symbol, _size, price, "SELL", "LIMIT")
-	log.Printf("SELL, symbol %s, size %f, price %f", symbol, _size, price)
+	order_type := "LIMIT"
+	if price <= 0 {
+		order_type = "MARKET"
+	}
+
+	accept_id := sendChildOrder(symbol, _size, price, "SELL", order_type)
+	insertOrder(accept_id.ChildOrderAcceptanceID, symbol, exchange.SELL, size)
 }
 
 func (b *Bitflyer) SellAllCypto() {
@@ -349,9 +375,9 @@ func getSymbolByBalance(balance string) (exchange.Symbol, bool) {
 	// return val
 }
 
-func sendChildOrder(symbol exchange.Symbol, size float64, price float64, side string, ordertype string) {
+func sendChildOrder(symbol exchange.Symbol, size float64, price float64, side string, ordertype string) childOrderAcceptanceID {
 	if size <= 0.0 {
-		return
+		return childOrderAcceptanceID{}
 	}
 
 	order := sendchildorder{
@@ -360,7 +386,7 @@ func sendChildOrder(symbol exchange.Symbol, size float64, price float64, side st
 		Side:           side,
 		Price:          price,
 		Size:           size,
-		MinuteToExpire: 3,
+		MinuteToExpire: common.ORDER_WAIT_MINUTE,
 		TimeInForce:    "GTC",
 	}
 
@@ -368,11 +394,18 @@ func sendChildOrder(symbol exchange.Symbol, size float64, price float64, side st
 	jsonData, err := json.MarshalIndent(order, "", "  ")
 	if err != nil {
 		log.Fatalf("Error: %s", err)
-		return
+		return childOrderAcceptanceID{}
 	}
 
 	path := "/v1/me/sendchildorder"
-	bitFlyerPrivateAPICore(path, "POST", []byte(jsonData), true)
+	rep := bitFlyerPrivateAPICore(path, "POST", []byte(jsonData), true)
+	var _childOrderAcceptanceID childOrderAcceptanceID
+	err = json.Unmarshal([]byte(rep), &_childOrderAcceptanceID)
+	if err != nil {
+		fmt.Println("Error: GetTradingCommission", err)
+		return _childOrderAcceptanceID
+	}
+	return _childOrderAcceptanceID
 }
 
 type position struct {
