@@ -115,7 +115,7 @@ func getbalancevalue(b exchange.Balance) string {
 
 func (b *Bitflyer) GetOrderNum(symbol exchange.Symbol, status exchange.OrderStatus, minues int, side exchange.Side) int {
 	cnt := 0
-	childorders := getChildOrders(getsymbol(symbol), getOrderStatus(status))
+	childorders := getChildOrders(getProductCode(symbol), getOrderStatus(status))
 
 	time_after := common.GetUTCNow().Add(time.Duration(-minues) * time.Minute)
 
@@ -210,7 +210,7 @@ func (b *Bitflyer) CancelAllOrder(symbol exchange.Symbol) {
 	path := "/v1/me/cancelallchildorders"
 	body := fmt.Sprintf(`{
 		"product_code": "%s"
-	}`, getsymbol(symbol))
+	}`, getProductCode(symbol))
 	bitFlyerPrivateAPICore(path, "POST", []byte(body))
 }
 
@@ -260,13 +260,13 @@ func (o sendchildorder) MarshalJSON() ([]byte, error) {
 // https://bitflyer.com/ja-jp/s/commission
 func (b *Bitflyer) GetTradeSizeLimit(symbol exchange.Symbol) float64 {
 	var limitMap map[exchange.Symbol]float64 = map[exchange.Symbol]float64{
-		exchange.BTCJPY:    0.001,
-		exchange.XRPJPY:    0.1,
-		exchange.ETHJPY:    0.01,
-		exchange.XLMJPY:    0.1,
-		exchange.MONAJPY:   0.1,
-		exchange.ETHBTC:    0.01,
-		exchange.BCHBTC:    0.01,
+		exchange.BTCJPY:  0.001,
+		exchange.XRPJPY:  0.1,
+		exchange.ETHJPY:  0.01,
+		exchange.XLMJPY:  0.1,
+		exchange.MONAJPY: 0.1,
+		// exchange.ETHBTC:    0.01,
+		// exchange.BCHBTC:    0.01,
 		exchange.FX_BTCJPY: 0.001,
 	}
 	limit, exist := limitMap[symbol]
@@ -296,7 +296,7 @@ func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64
 	coin, _ := symbol.GetTradePair()
 	_, coin_available := b.GetBalance(coin)
 
-	comission := getTradingCommission(getsymbol(symbol))
+	comission := getTradingCommission(getProductCode(symbol))
 	_size := coin_available * (1 - comission)
 
 	_limit := b.GetTradeSizeLimit(symbol)
@@ -333,7 +333,7 @@ func (b *Bitflyer) SellAllCypto() {
 			continue
 		}
 
-		size := balance.Available * (1 - getTradingCommission(getsymbol(s)))
+		size := balance.Available * (1 - getTradingCommission(getProductCode(s)))
 
 		sendChildOrder(s, size, 0, "SELL", "MARKET")
 	}
@@ -369,10 +369,6 @@ func getSymbolByBalance(balance string) (exchange.Symbol, bool) {
 
 	val, exist := symbolMap[balance]
 	return val, exist
-	// if !exist {
-	// 	panic(fmt.Sprintf("bitflyer no balance %s", balance))
-	// }
-	// return val
 }
 
 func sendChildOrder(symbol exchange.Symbol, size float64, price float64, side string, ordertype string) childOrderAcceptanceID {
@@ -381,7 +377,7 @@ func sendChildOrder(symbol exchange.Symbol, size float64, price float64, side st
 	}
 
 	order := sendchildorder{
-		ProductCode:    getsymbol(symbol),
+		ProductCode:    getProductCode(symbol),
 		ChildOrderType: ordertype,
 		Side:           side,
 		Price:          price,

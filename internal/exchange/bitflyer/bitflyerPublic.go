@@ -70,7 +70,7 @@ func bitflyerPublicAPICore(url string) (*http.Response, error) {
 
 func FetchExecution(s exchange.Symbol, count int, before_id int64, after_id int64) []Execution {
 
-	symbol := getsymbol(s)
+	symbol := getProductCode(s)
 
 	endpoint := "/v1/getexecutions"
 	u, err := url.Parse(baseURL + endpoint)
@@ -160,25 +160,21 @@ func convertExetutionsToKLine(executions []Execution) []exchange.KLine {
 	return kline
 }
 
-func getsymbol(symbol exchange.Symbol) string {
-	switch symbol {
-	case exchange.BTCJPY:
-		return "BTC_JPY"
-	case exchange.XRPJPY:
-		return "XRP_JPY"
-	case exchange.ETHJPY:
-		return "ETH_JPY"
-	case exchange.XLMJPY:
-		return "XLM_JPY"
-	case exchange.MONAJPY:
-		return "MONA_JPY"
-	case exchange.ETHBTC:
-		return "ETH_BTC"
-	case exchange.BCHBTC:
-		return "BCH_BTC"
-	case exchange.FX_BTCJPY:
-		return "FX_BTC_JPY"
-	default:
+func getProductCode(symbol exchange.Symbol) string {
+	productCodeMap := map[exchange.Symbol]string{
+		exchange.BTCJPY:  "BTC_JPY",
+		exchange.XRPJPY:  "XRP_JPY",
+		exchange.ETHJPY:  "ETH_JPY",
+		exchange.XLMJPY:  "XLM_JPY",
+		exchange.MONAJPY: "MONA_JPY",
+		// exchange.ETHBTC:    "ETH_BTC",
+		// exchange.BCHBTC:    "BCH_BTC",
+		exchange.FX_BTCJPY: "FX_BTC_JPY",
+	}
+
+	res, exist := productCodeMap[symbol]
+	if !exist {
 		panic(fmt.Sprintf("bitflyer err symbol %s", symbol))
 	}
+	return res
 }

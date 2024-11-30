@@ -45,7 +45,7 @@ func (b *Bitflyer) CheckUnfinishedOrder(symbol exchange.Symbol) {
 			continue
 		}
 
-		child_order := getChildOrderByID(getsymbol(symbol), oh.ID)
+		child_order := getChildOrderByID(getProductCode(symbol), oh.ID)
 		if len(child_order) > 1 {
 			var msg string
 			for _, o := range child_order {
