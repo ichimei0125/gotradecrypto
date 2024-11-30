@@ -3,6 +3,7 @@ package exchange
 import "fmt"
 
 type Exchange interface {
+	Name() string
 	// Public
 	FetchKLine(symbol Symbol, cache *[]KLine)
 	// Private

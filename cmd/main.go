@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	logger.InitLogger("log/app.log", 10, 5, 30, true)
+	logger.InitLogger(nil, "", 10, 5, 30, true)
 
 	// bitflyer
 	var _bitflyer = new(bitflyer.Bitflyer)
@@ -28,7 +28,6 @@ func main() {
 		{_bitflyer, klineBitflyerXRPJPY, exchange.XRPJPY},
 	}
 
-	logger.Info("Time, PriceNow, Open, Close, High, Low, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, RSI, BUY, SELL")
 	wg := new(sync.WaitGroup)
 	for {
 		wg.Add(len(trades))
@@ -37,6 +36,8 @@ func main() {
 			localT := t // 闭包变量捕获问题
 			go func(wg *sync.WaitGroup) {
 				defer wg.Done()
+				logger.InitLogger(localT.exchange, localT.symbol, 10, 5, 30, true)
+				logger.Info(localT.exchange, localT.symbol, "Time, PriceNow, Open, Close, High, Low, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, RSI, BUY, SELL")
 				localT.exchange.FetchKLine(localT.symbol, localT.kine)
 				indicator.GetIndicators(localT.kine)
 

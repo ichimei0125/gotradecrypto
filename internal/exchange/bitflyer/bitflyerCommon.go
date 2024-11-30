@@ -9,6 +9,10 @@ const baseURL = "https://api.bitflyer.com"
 
 type Bitflyer struct{}
 
+func (b *Bitflyer) Name() string {
+	return "bitflyer"
+}
+
 // Execution represents a single execution from bitFlyer
 type Execution struct {
 	Id       int64      `json:"id"`
