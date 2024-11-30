@@ -13,7 +13,7 @@ import (
 func insertOrder(acceptID string, symbol exchange.Symbol, side exchange.Side, size float64) {
 
 	record := db.OrderHistory{
-		Id:      acceptID,
+		ID:      acceptID,
 		Symbol:  string(symbol),
 		Side:    string(side),
 		Size:    size,
@@ -37,7 +37,7 @@ func (b *Bitflyer) CheckUnfinishedOrder(symbol exchange.Symbol) {
 			continue
 		}
 
-		child_order := getChildOrderByID(getsymbol(symbol), oh.Id)
+		child_order := getChildOrderByID(getsymbol(symbol), oh.ID)
 		if len(child_order) > 1 {
 			var msg string
 			for _, o := range child_order {
@@ -47,7 +47,7 @@ func (b *Bitflyer) CheckUnfinishedOrder(symbol exchange.Symbol) {
 		}
 
 		if child_order[0].ChildOrderState == getOrderStatus(exchange.COMPLETED) {
-			// TODO delete
+			db.Delete(_db, &oh)
 			continue
 		}
 

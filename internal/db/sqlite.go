@@ -10,7 +10,7 @@ import (
 )
 
 type OrderHistory struct {
-	Id string `gorm:"primaryKey"` // 订单id
+	ID string `gorm:"primaryKey"` // 订单id
 	// RefId   string    // 原始的订单id， 现物卖->现物买， 信用返还买->信用返还卖，信用返还卖->信用返还买
 	Symbol  string    `gorm:"not null"`
 	Side    string    `gorm:"not null"`
@@ -40,7 +40,7 @@ func OpenDB() *gorm.DB {
 func Insert(db *gorm.DB, oh *OrderHistory) {
 	result := db.Create(oh)
 	if result.Error != nil {
-		panic(fmt.Sprintf("db cannot insert: %s, id: %s", result.Error.Error(), oh.Id))
+		panic(fmt.Sprintf("db cannot insert: %s, id: %s", result.Error.Error(), oh.ID))
 	}
 }
 
@@ -54,15 +54,24 @@ func GetAllRecords(db *gorm.DB) []OrderHistory {
 }
 
 func Update(db *gorm.DB, oh *OrderHistory) {
-	result := db.Model(new(OrderHistory)).Where("id = ?", oh.Id).Updates(oh)
+	result := db.Model(new(OrderHistory)).Where("id = ?", oh.ID).Updates(oh)
 	if result.Error != nil {
-		panic(fmt.Sprintf("db cannot update: %s, id: %s", result.Error.Error(), oh.Id))
+		panic(fmt.Sprintf("db cannot update: %s, id: %s", result.Error.Error(), oh.ID))
 	}
 }
 
 func Delete(db *gorm.DB, oh *OrderHistory) {
 	result := db.Delete(oh)
 	if result.Error != nil {
-		panic(fmt.Sprintf("db cannot delete: %s, id: %s", result.Error.Error(), oh.Id))
+		panic(fmt.Sprintf("db cannot delete: %s, id: %s", result.Error.Error(), oh.ID))
+	}
+}
+
+func DeleteByID(db *gorm.DB, id string) {
+	// result := db.Delete(&OrderHistory{}, id)
+	result := db.Where("id = ?", id).Delete(new(OrderHistory))
+
+	if result.Error != nil {
+		panic(fmt.Sprintf("db cannot delete: %s, id: %s", result.Error.Error(), id))
 	}
 }

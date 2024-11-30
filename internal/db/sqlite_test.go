@@ -14,7 +14,7 @@ func TestOpenDB(t *testing.T) {
 func TestInsert(t *testing.T) {
 	_db := db.OpenDB()
 	data := db.OrderHistory{
-		Id:      "testid2",
+		ID:      "testid2",
 		Symbol:  "testsymbol",
 		Side:    "testside",
 		Size:    100.3,
@@ -27,7 +27,7 @@ func TestInsert(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	_db := db.OpenDB()
 	data := db.OrderHistory{
-		Id:      "testid2",
+		ID:      "testid2",
 		Symbol:  "testsymbol",
 		Side:    "testside",
 		Size:    100.3,
@@ -40,7 +40,7 @@ func TestUpdate(t *testing.T) {
 func TestDelete(t *testing.T) {
 	_db := db.OpenDB()
 	data := db.OrderHistory{
-		Id:      "testid2",
+		ID:      "testid2",
 		Symbol:  "testsymbol",
 		Side:    "testside",
 		Size:    100.3,
@@ -54,6 +54,11 @@ func TestGetAll(t *testing.T) {
 	_db := db.OpenDB()
 	oh_list := db.GetAllRecords(_db)
 	for _, oh := range oh_list {
-		t.Log(oh.Id)
+		t.Log(oh.ID)
 	}
+}
+
+func TestDeleteByID(t *testing.T) {
+	_db := db.OpenDB()
+	db.DeleteByID(_db, "testid2")
 }
