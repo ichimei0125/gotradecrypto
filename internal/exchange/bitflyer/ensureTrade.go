@@ -47,6 +47,7 @@ func (b *Bitflyer) CheckUnfinishedOrder(symbol exchange.Symbol) {
 		}
 
 		if child_order[0].ChildOrderState == getOrderStatus(exchange.COMPLETED) {
+			// TODO delete
 			continue
 		}
 
