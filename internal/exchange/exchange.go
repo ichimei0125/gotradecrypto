@@ -21,41 +21,39 @@ type Exchange interface {
 type Balance string
 
 const (
-	JPY    = "JPY"
-	FX_JPY = "FX_JPY"
-	BTC    = "BTC"
-	ETH    = "ETH"
-	XRP    = "XRP"
-	XLM    = "XLM"
-	MONA   = "MONA"
-	BCH    = "BCH"
-	FX_BTC = "FX_BTC"
+	JPY  = "JPY"
+	BTC  = "BTC"
+	ETH  = "ETH"
+	XRP  = "XRP"
+	XLM  = "XLM"
+	MONA = "MONA"
+	BCH  = "BCH"
 )
 
 type Symbol string
 
 const (
-	BTCJPY    Symbol = "BTC_JPY"
-	XRPJPY    Symbol = "XRP_JPY"
-	ETHJPY    Symbol = "ETH_JPY"
-	XLMJPY    Symbol = "XLM_JPY"
-	MONAJPY   Symbol = "MONA_JPY"
-	ETHBTC    Symbol = "ETH_BTC"
-	BCHBTC    Symbol = "BCH_BTC"
+	BTCJPY  Symbol = "BTC_JPY"
+	XRPJPY  Symbol = "XRP_JPY"
+	ETHJPY  Symbol = "ETH_JPY"
+	XLMJPY  Symbol = "XLM_JPY"
+	MONAJPY Symbol = "MONA_JPY"
+	// ETHBTC    Symbol = "ETH_BTC"
+	// BCHBTC    Symbol = "BCH_BTC"
 	FX_BTCJPY Symbol = "FX_BTC_JPY"
 )
 
 // Return: Sell coin, Buy money (虚拟币， 法币)
 func (s *Symbol) GetTradePair() (Balance, Balance) {
 	tradePairMap := map[Symbol][2]Balance{
-		BTCJPY:    {BTC, JPY},
-		XRPJPY:    {XRP, JPY},
-		ETHJPY:    {ETH, JPY},
-		XLMJPY:    {XLM, JPY},
-		MONAJPY:   {MONA, JPY},
-		ETHBTC:    {ETH, BTC},
-		BCHBTC:    {BCH, BTC},
-		FX_BTCJPY: {FX_BTC, FX_JPY},
+		BTCJPY:  {BTC, JPY},
+		XRPJPY:  {XRP, JPY},
+		ETHJPY:  {ETH, JPY},
+		XLMJPY:  {XLM, JPY},
+		MONAJPY: {MONA, JPY},
+		// ETHBTC:    {ETH, BTC},
+		// BCHBTC:    {BCH, BTC},
+		FX_BTCJPY: {BTC, JPY},
 	}
 
 	if pair, exists := tradePairMap[*s]; exists {
@@ -63,6 +61,10 @@ func (s *Symbol) GetTradePair() (Balance, Balance) {
 	}
 
 	panic(fmt.Sprintf("no symbol: %s", *s))
+}
+
+func (s *Symbol) IsMargin() bool {
+	return *s == FX_BTCJPY
 }
 
 type OrderStatus string
