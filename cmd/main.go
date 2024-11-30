@@ -28,7 +28,7 @@ func main() {
 		{_bitflyer, klineBitflyerXRPJPY, exchange.XRPJPY},
 	}
 
-	logger.Info("Time, CloseTime, PriceNow, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, RSI, BUY, SELL")
+	logger.Info("Time, PriceNow, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, RSI, BUY, SELL")
 	wg := new(sync.WaitGroup)
 	for {
 		wg.Add(len(trades))
