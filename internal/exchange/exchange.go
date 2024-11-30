@@ -14,6 +14,8 @@ type Exchange interface {
 	GetOrderNum(symbol Symbol, status OrderStatus, minues int, side Side) int // number of special orderstatus
 	CancelAllOrder(symbol Symbol)
 	GetTradeSizeLimit(symbol Symbol) float64
+
+	CheckUnfinishedOrder(symbol Symbol)
 }
 
 type Balance string
@@ -44,7 +46,7 @@ const (
 )
 
 // Return: Sell coin, Buy money (虚拟币， 法币)
-func GetTradePair(symbol Symbol) (Balance, Balance) {
+func (s *Symbol) GetTradePair() (Balance, Balance) {
 	tradePairMap := map[Symbol][2]Balance{
 		BTCJPY:    {BTC, JPY},
 		XRPJPY:    {XRP, JPY},
@@ -56,11 +58,11 @@ func GetTradePair(symbol Symbol) (Balance, Balance) {
 		FX_BTCJPY: {FX_BTC, FX_JPY},
 	}
 
-	if pair, exists := tradePairMap[symbol]; exists {
+	if pair, exists := tradePairMap[*s]; exists {
 		return pair[0], pair[1]
 	}
 
-	panic(fmt.Sprintf("no symbol: %s", symbol))
+	panic(fmt.Sprintf("no symbol: %s", *s))
 }
 
 type OrderStatus string
