@@ -49,5 +49,5 @@ func Trade(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.KLine) 
 
 	// check unfinished order
 
-	logger.Info(fmt.Sprintf("%s, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %d, %d", time.Now(), d[0].Close, d[1].SMA, d[1].EMA, d[1].BBands_Plus_3K, d[1].BBands_Plus_2K, d[1].BBands_Minus_2K, d[1].BBands_Minus_3K, d[1].SlowK, d[1].SlowD, d[1].SMASlope, d[1].RSI, output_buy, output_sell))
+	logger.Info(fmt.Sprintf("%s, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %d, %d", time.Now(), d[0].Close, d[1].Open, d[1].Close, d[1].High, d[1].Low, d[1].SMA, d[1].EMA, d[1].BBands_Plus_3K, d[1].BBands_Plus_2K, d[1].BBands_Minus_2K, d[1].BBands_Minus_3K, d[1].SlowK, d[1].SlowD, d[1].SMASlope, d[1].RSI, output_buy, output_sell))
 }
