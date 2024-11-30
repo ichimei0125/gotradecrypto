@@ -27,8 +27,16 @@ func insertOrder(acceptID string, symbol exchange.Symbol, side exchange.Side, si
 }
 
 func (b *Bitflyer) CheckUnfinishedOrder(symbol exchange.Symbol) {
+	unfinished_order_num := b.GetOrderNum(symbol, exchange.CANCELED, common.ORDER_WAIT_MINUTE*2, exchange.SELL)
+	if unfinished_order_num <= 0 {
+		return
+	}
+
 	_db := db.OpenDB()
 	oh_list := db.GetAllRecords(_db)
+	if len(oh_list) <= 0 {
+		return
+	}
 
 	in_time := common.GetNow().Add(time.Duration(-common.ORDER_WAIT_MINUTE) * time.Minute)
 
