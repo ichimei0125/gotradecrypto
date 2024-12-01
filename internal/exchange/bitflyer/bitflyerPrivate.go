@@ -184,7 +184,7 @@ func getChildOrders(product_code string, child_order_status string) []childOrder
 	endpoint := "/v1/me/getchildorders"
 	path := endpoint + "?product_code=" + product_code + "&child_order_state=" + child_order_status
 
-	res := bitFlyerPrivateAPICore(path, "GET", nil, true)
+	res := bitFlyerPrivateAPICore(path, "GET", nil)
 	var childorders []childOrder
 	err := json.Unmarshal([]byte(res), &childorders)
 	if err != nil {
@@ -197,7 +197,7 @@ func getChildOrderByID(product_code string, child_order_acceptance_id string) []
 	endpoint := "/v1/me/getchildorders"
 	path := endpoint + "?product_code=" + product_code + "&child_order_acceptance_id=" + child_order_acceptance_id
 
-	res := bitFlyerPrivateAPICore(path, "GET", nil, true)
+	res := bitFlyerPrivateAPICore(path, "GET", nil)
 	var childorders []childOrder
 	err := json.Unmarshal([]byte(res), &childorders)
 	if err != nil {

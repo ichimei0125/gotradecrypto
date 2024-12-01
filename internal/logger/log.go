@@ -13,21 +13,36 @@ import (
 
 var (
 	loggers map[string]*log.Logger
-	once    sync.Once
+	onces   map[string]*sync.Once
+	mutex   sync.Mutex
 )
 
 func getFileName(e exchange.Exchange, s exchange.Symbol) string {
-	return e.Name() + "_" + string(s) + ".log"
+	filename := "app.log"
+	if e != nil && s != "" {
+		filename = e.Name() + "_" + string(s) + ".log"
+	}
+	return filename
 }
 
 // InitLogger 初始化日志
 func InitLogger(e exchange.Exchange, symbol exchange.Symbol, maxSize, maxBackups, maxAge int, compress bool) {
+	filename := getFileName(e, symbol)
+	path := path.Join("log", filename)
+	mutex.Lock()
+	if onces == nil {
+		onces = make(map[string]*sync.Once)
+	}
+	if loggers == nil {
+		loggers = make(map[string]*log.Logger)
+	}
+	if _, exists := onces[filename]; !exists {
+		onces[filename] = &sync.Once{}
+	}
+	mutex.Unlock()
+
+	once := onces[filename]
 	once.Do(func() {
-		filename := "app.log"
-		if e != nil && symbol != "" {
-			filename = getFileName(e, symbol)
-		}
-		path := path.Join("log", filename)
 
 		// 创建日志目录（如果不存在）
 		dir := getDir(path)
@@ -46,7 +61,6 @@ func InitLogger(e exchange.Exchange, symbol exchange.Symbol, maxSize, maxBackups
 			Compress:   compress,   // 启用压缩
 		}
 
-		// 初始化日志记录器
 		loggers[filename] = log.New(logWriter, "", log.Ldate|log.Ltime)
 	})
 }
@@ -56,21 +70,31 @@ func getDir(filePath string) string {
 	return filepath.Dir(filePath)
 }
 
+func getLogger(e exchange.Exchange, s exchange.Symbol) *log.Logger {
+	filename := getFileName(e, s)
+	mutex.Lock()
+	defer mutex.Unlock()
+	logger, exists := loggers[filename]
+	if !exists {
+		log.Printf("Logger not initialized for Exchange: %s, Symbol: %s. Please call InitLogger first.", e.Name(), string(s))
+	}
+	return logger
+}
+
 // Info 记录信息级别日志
 func Info(e exchange.Exchange, s exchange.Symbol, v ...interface{}) {
-	logger := loggers[getFileName(e, s)]
+	logger := getLogger(e, s)
 	if logger == nil {
-		log.Println("Use InitLogger")
 		return
 	}
+	logger.SetPrefix("INFO: ")
 	logger.Println(v...)
 }
 
 // Error 记录错误级别日志
 func Error(e exchange.Exchange, s exchange.Symbol, v ...interface{}) {
-	logger := loggers[getFileName(e, s)]
+	logger := getLogger(e, s)
 	if logger == nil {
-		log.Println("Use InitLogger")
 		return
 	}
 	logger.SetPrefix("ERROR: ")
@@ -79,9 +103,8 @@ func Error(e exchange.Exchange, s exchange.Symbol, v ...interface{}) {
 
 // Debug 记录调试级别日志
 func Debug(e exchange.Exchange, s exchange.Symbol, v ...interface{}) {
-	logger := loggers[getFileName(e, s)]
+	logger := getLogger(e, s)
 	if logger == nil {
-		log.Println("Use InitLogger")
 		return
 	}
 	logger.SetPrefix("DEBUG: ")
@@ -89,10 +112,10 @@ func Debug(e exchange.Exchange, s exchange.Symbol, v ...interface{}) {
 }
 
 func Print(e exchange.Exchange, s exchange.Symbol, v ...interface{}) {
-	logger := loggers[getFileName(e, s)]
+	logger := getLogger(e, s)
 	if logger == nil {
-		log.Println("Use InitLogger")
 		return
 	}
+	logger.SetPrefix("")
 	logger.Println(v...)
 }

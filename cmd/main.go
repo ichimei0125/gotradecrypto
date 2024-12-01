@@ -13,12 +13,13 @@ import (
 )
 
 func main() {
-	logger.InitLogger(nil, "", 10, 5, 30, true)
 
 	// bitflyer
 	var _bitflyer = new(bitflyer.Bitflyer)
 	// bitflyer xrpjpy
 	var klineBitflyerXRPJPY *[]exchange.KLine = &[]exchange.KLine{}
+	// bitflyer fx_btc_jpy
+	var klineBitflyerFXBTCJPY *[]exchange.KLine = &[]exchange.KLine{}
 
 	trades := []struct {
 		exchange exchange.Exchange
@@ -26,6 +27,14 @@ func main() {
 		symbol   exchange.Symbol
 	}{
 		{_bitflyer, klineBitflyerXRPJPY, exchange.XRPJPY},
+		{_bitflyer, klineBitflyerFXBTCJPY, exchange.FX_BTCJPY},
+	}
+
+	// init log
+	logger.InitLogger(nil, "", 10, 5, 30, true)
+	for _, t := range trades {
+		logger.InitLogger(t.exchange, t.symbol, 10, 5, 30, true)
+		logger.Print(t.exchange, t.symbol, "Time, PriceNow, Open, Close, High, Low, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, RSI, BUY, SELL")
 	}
 
 	wg := new(sync.WaitGroup)
@@ -36,8 +45,6 @@ func main() {
 			localT := t // 闭包变量捕获问题
 			go func(wg *sync.WaitGroup) {
 				defer wg.Done()
-				logger.InitLogger(localT.exchange, localT.symbol, 10, 5, 30, true)
-				logger.Info(localT.exchange, localT.symbol, "Time, PriceNow, Open, Close, High, Low, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, RSI, BUY, SELL")
 				localT.exchange.FetchKLine(localT.symbol, localT.kine)
 				indicator.GetIndicators(localT.kine)
 
