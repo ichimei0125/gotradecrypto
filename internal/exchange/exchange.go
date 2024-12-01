@@ -1,6 +1,10 @@
 package exchange
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/ichimei0125/gotradecrypto/internal/config"
+)
 
 type Exchange interface {
 	Name() string
@@ -17,6 +21,20 @@ type Exchange interface {
 	GetTradeSizeLimit(symbol Symbol) float64
 
 	CheckUnfinishedOrder(symbol Symbol)
+}
+
+func (s *Symbol) IsDryRun(exhangeName string) bool {
+	dry_run := config.GetConfig().DryRun
+	symbols, exist := dry_run[exhangeName]
+	if !exist {
+		panic(fmt.Sprintf("no exchange in config.yaml %s", exhangeName))
+	}
+
+	if is_dry_run, _exist := symbols[string(*s)]; _exist {
+		return is_dry_run
+	} else {
+		panic(fmt.Sprintf("no symbol in config.yaml %s, exchange %s", string(*s), exhangeName))
+	}
 }
 
 type Balance string
