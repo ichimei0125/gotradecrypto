@@ -8,8 +8,11 @@ import (
 )
 
 type Config struct {
-	Secrets map[string]map[string]string `yaml:"secrets"`
-	Trade   struct {
+	Secrets map[string]struct {
+		ApiKey    string `yaml:"api_key"`
+		ApiSecret string `yaml:"api_secret"`
+	} `yaml:"secrets"`
+	Trade struct {
 		InvestMoney int `yaml:"invest_money"`
 		CutLoss     int `yaml:"cut_loss"`
 		SafeMoney   int `yaml:"save_money"`

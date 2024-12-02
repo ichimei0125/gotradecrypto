@@ -88,20 +88,11 @@ func (s *Symbol) IsMargin() bool {
 
 func GetSecret(exchangeName string) (string, string) {
 	secrets := config.GetConfig().Secrets
-	secret, exist := secrets[exchangeName]
-	if !exist {
+	if secret, exist := secrets[exchangeName]; exist {
+		return secret.ApiKey, secret.ApiSecret
+	} else {
 		panic(fmt.Sprintf("no exchange in config.yaml, %s", exchangeName))
 	}
-
-	ApiKey, exist := secret["api_key"]
-	if !exist {
-		panic(fmt.Sprintf("no \"api_key\" in config.yaml, %s", exchangeName))
-	}
-	ApiSecret, exist := secret["api_secret"]
-	if !exist {
-		panic(fmt.Sprintf("no \"api_secret\" in config.yaml, %s", exchangeName))
-	}
-	return ApiKey, ApiSecret
 }
 
 type OrderStatus string
