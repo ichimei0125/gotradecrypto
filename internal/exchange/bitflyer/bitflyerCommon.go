@@ -13,8 +13,6 @@ func (b *Bitflyer) Name() string {
 	return "bitflyer"
 }
 
-const name string = "bitflyer"
-
 // Execution represents a single execution from bitFlyer
 type Execution struct {
 	Id       int64      `json:"id"`
