@@ -98,10 +98,11 @@ func GetSecret(exchangeName string) (string, string) {
 type OrderStatus string
 
 const (
-	ACTIVE    OrderStatus = "active"
-	COMPLETED OrderStatus = "completed"
-	CANCELED  OrderStatus = "canceled"
-	REJECTED  OrderStatus = "rejected"
+	ACTIVE    OrderStatus = "active"    // オープンな注文
+	COMPLETED OrderStatus = "completed" // 全額が取引完了した注文
+	CANCELED  OrderStatus = "canceled"  // お客様がキャンセルした注文
+	REJECTED  OrderStatus = "rejected"  // 有効期限に到達したため取り消された注文
+	EXPIRED   OrderStatus = "expired"   // 失敗した注文
 )
 
 type Side string

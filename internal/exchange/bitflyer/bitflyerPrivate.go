@@ -144,6 +144,7 @@ func getOrderStatus(status exchange.OrderStatus) string {
 		exchange.COMPLETED: "COMPLETED",
 		exchange.CANCELED:  "CANCELED",
 		exchange.REJECTED:  "REJECTED",
+		exchange.EXPIRED:   "EXPIRED",
 	}
 
 	if s, exist := statusMap[status]; exist {
@@ -309,7 +310,7 @@ func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64
 	}
 
 	accept_id := sendChildOrder(symbol, _size, price, "SELL", order_type)
-	insertOrder(accept_id.ChildOrderAcceptanceID, symbol, exchange.SELL, size)
+	insertOrder(accept_id.ChildOrderAcceptanceID, symbol, exchange.SELL, _size)
 }
 
 func (b *Bitflyer) SellAllCypto() {
