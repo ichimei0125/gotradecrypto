@@ -279,10 +279,10 @@ func (b *Bitflyer) BuyCypto(symbol exchange.Symbol, size float64, price float64)
 	limit := b.GetTradeSizeLimit(symbol)
 
 	_, money := symbol.GetTradePair()
-	amount, _ := b.GetBalance(money)
+	_, avaiable := b.GetBalance(money)
 	c := config.GetConfig()
 
-	if size < limit || amount < float64(c.Trade.SafeMoney) {
+	if size < limit || avaiable < float64(c.Trade.SafeMoney) {
 		// お金不足
 		return
 	}
