@@ -20,7 +20,7 @@ import (
 
 func bitFlyerPrivateAPICore(path string, method string, body []byte, is_log ...bool) []byte {
 
-	key, secret := exchange.GetSecret(new(Bitflyer).Name())
+	key, secret := exchange.GetSecret(name)
 
 	timestamp := fmt.Sprintf("%d", time.Now().UnixNano()/int64(time.Millisecond))
 
