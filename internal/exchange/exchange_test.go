@@ -1,6 +1,7 @@
 package exchange_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
@@ -19,4 +20,12 @@ func TestIsDryRun(t *testing.T) {
 	symbol = exchange.ETHJPY
 	symbol.IsDryRun(e.Name())
 
+}
+
+func TestGetSecrets(t *testing.T) {
+	e := &bitflyer.Bitflyer{}
+	key, secret := exchange.GetSecret(e.Name())
+	fmt.Println(key, secret)
+
+	exchange.GetSecret("test")
 }

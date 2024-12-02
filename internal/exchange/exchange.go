@@ -23,20 +23,6 @@ type Exchange interface {
 	CheckUnfinishedOrder(symbol Symbol)
 }
 
-func (s *Symbol) IsDryRun(exhangeName string) bool {
-	dry_run := config.GetConfig().DryRun
-	symbols, exist := dry_run[exhangeName]
-	if !exist {
-		panic(fmt.Sprintf("no exchange in config.yaml %s", exhangeName))
-	}
-
-	if is_dry_run, _exist := symbols[string(*s)]; _exist {
-		return is_dry_run
-	} else {
-		panic(fmt.Sprintf("no symbol in config.yaml %s, exchange %s", string(*s), exhangeName))
-	}
-}
-
 type Balance string
 
 const (
@@ -82,8 +68,40 @@ func (s *Symbol) GetTradePair() (Balance, Balance) {
 	panic(fmt.Sprintf("no symbol: %s", *s))
 }
 
+func (s *Symbol) IsDryRun(exchangeName string) bool {
+	dry_run := config.GetConfig().DryRun
+	symbols, exist := dry_run[exchangeName]
+	if !exist {
+		panic(fmt.Sprintf("no exchange in config.yaml %s", exchangeName))
+	}
+
+	if is_dry_run, _exist := symbols[string(*s)]; _exist {
+		return is_dry_run
+	} else {
+		panic(fmt.Sprintf("no symbol in config.yaml %s, exchange %s", string(*s), exchangeName))
+	}
+}
+
 func (s *Symbol) IsMargin() bool {
 	return *s == FX_BTCJPY
+}
+
+func GetSecret(exchangeName string) (string, string) {
+	secrets := config.GetConfig().Secrets
+	secret, exist := secrets[exchangeName]
+	if !exist {
+		panic(fmt.Sprintf("no exchange in config.yaml, %s", exchangeName))
+	}
+
+	ApiKey, exist := secret["api_key"]
+	if !exist {
+		panic(fmt.Sprintf("no \"api_key\" in config.yaml, %s", exchangeName))
+	}
+	ApiSecret, exist := secret["api_secret"]
+	if !exist {
+		panic(fmt.Sprintf("no \"api_secret\" in config.yaml, %s", exchangeName))
+	}
+	return ApiKey, ApiSecret
 }
 
 type OrderStatus string

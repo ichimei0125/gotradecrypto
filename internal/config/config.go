@@ -8,11 +8,8 @@ import (
 )
 
 type Config struct {
-	Bitflyer struct {
-		APIKey    string `yaml:"api_key"`
-		APISecret string `yaml:"api_secret"`
-	} `yaml:"bitflyer"`
-	Trade struct {
+	Secrets map[string]map[string]string `yaml:"secrets"`
+	Trade   struct {
 		InvestMoney int `yaml:"invest_money"`
 		CutLoss     int `yaml:"cut_loss"`
 		SafeMoney   int `yaml:"save_money"`
