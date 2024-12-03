@@ -2,7 +2,6 @@ package db_test
 
 import (
 	"testing"
-	"time"
 
 	"github.com/ichimei0125/gotradecrypto/internal/db"
 )
@@ -16,12 +15,10 @@ func TestInsert(t *testing.T) {
 	db.InitDB()
 	defer db.CloseDB()
 	data := db.OrderHistory{
-		ID:      "testid2",
-		Symbol:  "testsymbol",
-		Side:    "testside",
-		Size:    100.3,
-		Time:    time.Now(),
-		SendCnt: 0,
+		ID:     "testid2",
+		Symbol: "testsymbol",
+		Side:   "testside",
+		Size:   100.3,
 	}
 	db.Insert(&data)
 }
@@ -30,12 +27,7 @@ func TestUpdate(t *testing.T) {
 	db.InitDB()
 	defer db.CloseDB()
 	data := db.OrderHistory{
-		ID:      "testid2",
-		Symbol:  "testsymbol",
-		Side:    "testside",
-		Size:    100.3,
-		Time:    time.Now(),
-		SendCnt: 1,
+		ID: "testid2",
 	}
 	db.Update(&data)
 }
@@ -48,7 +40,6 @@ func TestDelete(t *testing.T) {
 		Symbol:  "testsymbol",
 		Side:    "testside",
 		Size:    100.3,
-		Time:    time.Now(),
 		SendCnt: 1,
 	}
 	db.Delete(&data)

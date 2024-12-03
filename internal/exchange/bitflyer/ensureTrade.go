@@ -17,7 +17,6 @@ func insertOrder(acceptID string, symbol exchange.Symbol, side exchange.Side, si
 		Symbol:  string(symbol),
 		Side:    string(side),
 		Size:    size,
-		Time:    common.GetNow(),
 		SendCnt: 0,
 	}
 
@@ -33,7 +32,7 @@ func (b *Bitflyer) CheckUnfinishedOrder(symbol exchange.Symbol) {
 	in_time := common.GetNow().Add(time.Duration(-common.ORDER_WAIT_MINUTE) * time.Minute)
 
 	for _, oh := range oh_list {
-		if oh.Time.After(in_time) {
+		if oh.CreatedAt.After(in_time) {
 			continue
 		}
 
