@@ -37,7 +37,7 @@ func InitDB() *gorm.DB {
 	sqlDB.SetConnMaxLifetime(60 * time.Minute) // 连接最大生命周期
 
 	// init table
-	err = _db.AutoMigrate(new(OrderHistory))
+	err = _db.AutoMigrate(new(OrderHistory), new(AppErr))
 	if err != nil {
 		panic(fmt.Sprintf("db cannot auto migrate: %s", err.Error()))
 	}

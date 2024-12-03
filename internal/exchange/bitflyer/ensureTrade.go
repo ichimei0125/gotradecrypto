@@ -13,11 +13,12 @@ import (
 func insertOrder(acceptID string, symbol exchange.Symbol, side exchange.Side, size float64) {
 
 	record := db.OrderHistory{
-		ID:      acceptID,
-		Symbol:  string(symbol),
-		Side:    string(side),
-		Size:    size,
-		SendCnt: 0,
+		ID:       acceptID,
+		Exchange: new(Bitflyer).Name(),
+		Symbol:   string(symbol),
+		Side:     string(side),
+		Size:     size,
+		SendCnt:  0,
 	}
 
 	db.Insert(&record)

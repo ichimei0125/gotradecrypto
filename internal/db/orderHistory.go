@@ -20,7 +20,7 @@ type OrderHistory struct {
 func Insert(oh *OrderHistory) {
 	result := _db.Create(oh)
 	if result.Error != nil {
-		panic(fmt.Sprintf("db cannot insert: %s, id: %s", result.Error.Error(), oh.ID))
+		panic(fmt.Sprintf("db cannot insert OrderHistory: %s, id: %s", result.Error.Error(), oh.ID))
 	}
 }
 
@@ -28,7 +28,7 @@ func GetAllRecords() []OrderHistory {
 	var records []OrderHistory
 	result := _db.Find(&records)
 	if result.Error != nil {
-		panic(fmt.Sprintf("db cannot read all: %s", result.Error.Error()))
+		panic(fmt.Sprintf("db cannot read all OrderHistory: %s", result.Error.Error()))
 	}
 	return records
 }
@@ -36,14 +36,14 @@ func GetAllRecords() []OrderHistory {
 func Update(oh *OrderHistory) {
 	result := _db.Model(new(OrderHistory)).Where("id = ?", oh.ID).Updates(oh)
 	if result.Error != nil {
-		panic(fmt.Sprintf("db cannot update: %s, id: %s", result.Error.Error(), oh.ID))
+		panic(fmt.Sprintf("db cannot update OrderHistory: %s, id: %s", result.Error.Error(), oh.ID))
 	}
 }
 
 func Delete(oh *OrderHistory) {
 	result := _db.Delete(oh)
 	if result.Error != nil {
-		panic(fmt.Sprintf("db cannot delete: %s, id: %s", result.Error.Error(), oh.ID))
+		panic(fmt.Sprintf("db cannot delete OrderHistory: %s, id: %s", result.Error.Error(), oh.ID))
 	}
 }
 
@@ -52,6 +52,6 @@ func DeleteByID(id string) {
 	result := _db.Where("id = ?", id).Delete(new(OrderHistory))
 
 	if result.Error != nil {
-		panic(fmt.Sprintf("db cannot delete: %s, id: %s", result.Error.Error(), id))
+		panic(fmt.Sprintf("db cannot delete OrderHistory: %s, id: %s", result.Error.Error(), id))
 	}
 }
