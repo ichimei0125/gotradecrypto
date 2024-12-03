@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ichimei0125/gotradecrypto/internal/common"
+	"github.com/ichimei0125/gotradecrypto/internal/db"
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 	"github.com/ichimei0125/gotradecrypto/internal/exchange/bitflyer"
 	"github.com/ichimei0125/gotradecrypto/internal/indicator"
@@ -36,6 +37,10 @@ func main() {
 		logger.InitLogger(t.exchange, t.symbol, 10, 5, 30, true)
 		logger.Print(t.exchange, t.symbol, "Time, PriceNow, Open, Close, High, Low, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, RSI, BUY, SELL")
 	}
+
+	// init db
+	db.InitDB()
+	defer db.CloseDB()
 
 	wg := new(sync.WaitGroup)
 	for {

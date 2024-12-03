@@ -21,14 +21,11 @@ func insertOrder(acceptID string, symbol exchange.Symbol, side exchange.Side, si
 		SendCnt: 0,
 	}
 
-	_db := db.OpenDB()
-
-	db.Insert(_db, &record)
+	db.Insert(&record)
 }
 
 func (b *Bitflyer) CheckUnfinishedOrder(symbol exchange.Symbol) {
-	_db := db.OpenDB()
-	oh_list := db.GetAllRecords(_db)
+	oh_list := db.GetAllRecords()
 	if len(oh_list) <= 0 {
 		return
 	}
@@ -50,7 +47,7 @@ func (b *Bitflyer) CheckUnfinishedOrder(symbol exchange.Symbol) {
 		}
 
 		if child_order[0].ChildOrderState == getOrderStatus(exchange.COMPLETED) {
-			db.Delete(_db, &oh)
+			db.Delete(&oh)
 			continue
 		}
 

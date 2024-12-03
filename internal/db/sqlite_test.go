@@ -8,11 +8,13 @@ import (
 )
 
 func TestOpenDB(t *testing.T) {
-	db.OpenDB()
+	db.InitDB()
+	defer db.CloseDB()
 }
 
 func TestInsert(t *testing.T) {
-	_db := db.OpenDB()
+	db.InitDB()
+	defer db.CloseDB()
 	data := db.OrderHistory{
 		ID:      "testid2",
 		Symbol:  "testsymbol",
@@ -21,11 +23,12 @@ func TestInsert(t *testing.T) {
 		Time:    time.Now(),
 		SendCnt: 0,
 	}
-	db.Insert(_db, &data)
+	db.Insert(&data)
 }
 
 func TestUpdate(t *testing.T) {
-	_db := db.OpenDB()
+	db.InitDB()
+	defer db.CloseDB()
 	data := db.OrderHistory{
 		ID:      "testid2",
 		Symbol:  "testsymbol",
@@ -34,11 +37,12 @@ func TestUpdate(t *testing.T) {
 		Time:    time.Now(),
 		SendCnt: 1,
 	}
-	db.Update(_db, &data)
+	db.Update(&data)
 }
 
 func TestDelete(t *testing.T) {
-	_db := db.OpenDB()
+	db.InitDB()
+	defer db.CloseDB()
 	data := db.OrderHistory{
 		ID:      "testid2",
 		Symbol:  "testsymbol",
@@ -47,18 +51,20 @@ func TestDelete(t *testing.T) {
 		Time:    time.Now(),
 		SendCnt: 1,
 	}
-	db.Delete(_db, &data)
+	db.Delete(&data)
 }
 
 func TestGetAll(t *testing.T) {
-	_db := db.OpenDB()
-	oh_list := db.GetAllRecords(_db)
+	db.InitDB()
+	defer db.CloseDB()
+	oh_list := db.GetAllRecords()
 	for _, oh := range oh_list {
 		t.Log(oh.ID)
 	}
 }
 
 func TestDeleteByID(t *testing.T) {
-	_db := db.OpenDB()
-	db.DeleteByID(_db, "testid2")
+	db.InitDB()
+	defer db.CloseDB()
+	db.DeleteByID("testid2")
 }
