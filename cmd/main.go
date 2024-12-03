@@ -19,7 +19,7 @@ func main() {
 	// bitflyer xrpjpy
 	var klineBitflyerXRPJPY *[]exchange.KLine = &[]exchange.KLine{}
 	// bitflyer fx_btc_jpy
-	var klineBitflyerFXBTCJPY *[]exchange.KLine = &[]exchange.KLine{}
+	// var klineBitflyerFXBTCJPY *[]exchange.KLine = &[]exchange.KLine{}
 
 	trades := []struct {
 		exchange exchange.Exchange
@@ -27,7 +27,7 @@ func main() {
 		symbol   exchange.Symbol
 	}{
 		{_bitflyer, klineBitflyerXRPJPY, exchange.XRPJPY},
-		{_bitflyer, klineBitflyerFXBTCJPY, exchange.FX_BTCJPY},
+		// {_bitflyer, klineBitflyerFXBTCJPY, exchange.FX_BTCJPY},
 	}
 
 	// init log

@@ -27,13 +27,6 @@ func insertOrder(acceptID string, symbol exchange.Symbol, side exchange.Side, si
 }
 
 func (b *Bitflyer) CheckUnfinishedOrder(symbol exchange.Symbol) {
-	expired_order_num := b.GetOrderNum(symbol, exchange.EXPIRED, common.ORDER_WAIT_MINUTE*2, exchange.SELL)
-	completed_order_num := b.GetOrderNum(symbol, exchange.COMPLETED, common.ORDER_WAIT_MINUTE*2, exchange.SELL)
-	rejected_order_num := b.GetOrderNum(symbol, exchange.REJECTED, common.ORDER_WAIT_MINUTE*2, exchange.SELL)
-	if expired_order_num <= 0 && completed_order_num <= 0 && rejected_order_num <= 0 {
-		return
-	}
-
 	_db := db.OpenDB()
 	oh_list := db.GetAllRecords(_db)
 	if len(oh_list) <= 0 {
