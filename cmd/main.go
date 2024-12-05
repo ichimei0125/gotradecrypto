@@ -1,10 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"os"
-	"os/signal"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/ichimei0125/gotradecrypto/internal/common"
@@ -16,7 +15,16 @@ import (
 	"github.com/ichimei0125/gotradecrypto/internal/trade"
 )
 
+// catch app error
+func handlePanic() {
+	if r := recover(); r != nil {
+		db.InsertErr(fmt.Sprintf("panic: %v", r))
+		os.Exit(1)
+	}
+}
+
 func main() {
+	defer handlePanic()
 
 	// bitflyer
 	var _bitflyer = new(bitflyer.Bitflyer)
@@ -45,40 +53,29 @@ func main() {
 	db.InitDB()
 	defer db.CloseDB()
 
-	// catch app error
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
-	done := make(chan struct{})
-	go func() {
-		sig := <-signalChan
-		db.InsertErr(sig.String())
-		close(done)
-	}()
 	// TOOD: recovery from AppErr
 
 	wg := new(sync.WaitGroup)
 	for {
-		select {
-		case <-done:
-			// catch app error
-			return
-		default:
-			wg.Add(len(trades))
+		wg.Add(len(trades))
 
-			for _, t := range trades {
-				localT := t // 闭包变量捕获问题
-				go func(wg *sync.WaitGroup) {
-					defer wg.Done()
-					localT.exchange.FetchKLine(localT.symbol, localT.kine)
-					indicator.GetIndicators(localT.kine)
+		for _, t := range trades {
+			localT := t // 闭包变量捕获问题
+			go func(wg *sync.WaitGroup) {
+				defer handlePanic()
+				defer wg.Done()
+				localT.exchange.FetchKLine(localT.symbol, localT.kine)
+				indicator.GetIndicators(localT.kine)
 
-					go trade.Trade(localT.exchange, localT.symbol, localT.kine)
-				}(wg)
-			}
-
-			wg.Wait()
-			// sleep
-			time.Sleep(time.Duration(common.REFRESH_INTERVAL) * time.Minute)
+				go func() {
+					defer handlePanic()
+					trade.Trade(localT.exchange, localT.symbol, localT.kine)
+				}()
+			}(wg)
 		}
+
+		wg.Wait()
+		// sleep
+		time.Sleep(time.Duration(common.REFRESH_INTERVAL) * time.Minute)
 	}
 }

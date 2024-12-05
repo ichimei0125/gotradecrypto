@@ -30,6 +30,13 @@ func DeleteErrAfter(t time.Time) {
 	}
 }
 
+func DeleteErrBefore(t time.Time) {
+	result := _db.Delete(&AppErr{}, "created_at <= ?", t)
+	if result.Error != nil {
+		log.Fatalf("db cannot delete Err: %s", result.Error.Error())
+	}
+}
+
 func GetErrAfter(t time.Time) []AppErr {
 	var errs []AppErr
 	result := _db.Where("created_at >= ?", t).Find(&errs)
