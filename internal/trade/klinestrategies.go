@@ -22,7 +22,7 @@ func tradestrategy(data *[]exchange.KLine) TradeStatus {
 		// if d[0].SlowK > d[0].SlowD {
 		// 	return BUY
 		// }
-		if d[1].Close <= d[1].BBands_Minus_2K && d[0].Close >= d[0].BBands_Minus_2K && d[1].SMASlope < 0 {
+		if d[1].Close <= d[1].BBands_Minus_2K && d[0].Close >= d[0].BBands_Minus_2K { // && d[1].SMASlope < 0 {
 			return BUY
 		}
 
@@ -34,7 +34,7 @@ func tradestrategy(data *[]exchange.KLine) TradeStatus {
 		// if d[0].SlowK < d[0].SlowD {
 		// 	return SELL
 		// }
-		if d[1].Close >= d[1].BBands_Plus_2K && d[0].Close <= d[0].BBands_Plus_2K && d[1].SMASlope > 0 {
+		if d[1].Close >= d[1].BBands_Plus_2K && d[0].Close <= d[0].BBands_Plus_2K { // && d[1].SMASlope > 0 {
 			return SELL
 		}
 	}

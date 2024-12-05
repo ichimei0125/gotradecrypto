@@ -13,29 +13,19 @@ import (
 func insertOrder(acceptID string, symbol exchange.Symbol, side exchange.Side, size float64) {
 
 	record := db.OrderHistory{
-		ID:      acceptID,
-		Symbol:  string(symbol),
-		Side:    string(side),
-		Size:    size,
-		Time:    common.GetNow(),
-		SendCnt: 0,
+		ID:       acceptID,
+		Exchange: new(Bitflyer).Name(),
+		Symbol:   string(symbol),
+		Side:     string(side),
+		Size:     size,
+		SendCnt:  0,
 	}
 
-	_db := db.OpenDB()
-
-	db.Insert(_db, &record)
+	db.Insert(&record)
 }
 
 func (b *Bitflyer) CheckUnfinishedOrder(symbol exchange.Symbol) {
-	expired_order_num := b.GetOrderNum(symbol, exchange.EXPIRED, common.ORDER_WAIT_MINUTE*2, exchange.SELL)
-	completed_order_num := b.GetOrderNum(symbol, exchange.COMPLETED, common.ORDER_WAIT_MINUTE*2, exchange.SELL)
-	rejected_order_num := b.GetOrderNum(symbol, exchange.REJECTED, common.ORDER_WAIT_MINUTE*2, exchange.SELL)
-	if expired_order_num <= 0 && completed_order_num <= 0 && rejected_order_num <= 0 {
-		return
-	}
-
-	_db := db.OpenDB()
-	oh_list := db.GetAllRecords(_db)
+	oh_list := db.GetAllRecords()
 	if len(oh_list) <= 0 {
 		return
 	}
@@ -43,7 +33,7 @@ func (b *Bitflyer) CheckUnfinishedOrder(symbol exchange.Symbol) {
 	in_time := common.GetNow().Add(time.Duration(-common.ORDER_WAIT_MINUTE) * time.Minute)
 
 	for _, oh := range oh_list {
-		if oh.Time.After(in_time) {
+		if oh.CreatedAt.After(in_time) {
 			continue
 		}
 
@@ -57,7 +47,7 @@ func (b *Bitflyer) CheckUnfinishedOrder(symbol exchange.Symbol) {
 		}
 
 		if child_order[0].ChildOrderState == getOrderStatus(exchange.COMPLETED) {
-			db.Delete(_db, &oh)
+			db.Delete(&oh)
 			continue
 		}
 
