@@ -28,7 +28,7 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 			*cache = []exchange.KLine{}
 			break
 		}
-		oldest_id = excutions[len(excutions)-1].Id
+		oldest_id = excutions[len(excutions)-1].ID
 
 		new_kline := convertExetutionsToKLine(excutions)
 

@@ -13,12 +13,14 @@ func (b *Bitflyer) Name() string {
 	return "bitflyer"
 }
 
-// Execution represents a single execution from bitFlyer
 type Execution struct {
-	Id       int64      `json:"id"`
-	ExecDate CustomTime `json:"exec_date"`
-	Price    float64    `json:"price"`
-	Size     float64    `json:"size"`
+	ID                         int64      `json:"id" gorm:"primaryKey;autoIncrement:false"`
+	Side                       string     `json:"side" gorm:"not null"`
+	Price                      float64    `json:"price" gorm:"not null"`
+	Size                       float64    `json:"size" gorm:"not null"`
+	ExecDate                   CustomTime `json:"exec_date" gorm:"not null;index"`
+	BuyChildOrderAcceptanceId  string     `json:"buy_child_order_acceptance_id"`
+	SellChildOrderAcceptanceId string     `json:"sell_child_order_acceptance_id"`
 }
 
 type CustomTime struct {
