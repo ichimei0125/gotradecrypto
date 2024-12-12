@@ -9,7 +9,6 @@ import (
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 )
 
-// masterID: 現物買、信用買、信用売 -> 現物売、信用返済買、信用返済売
 func insertOrder(acceptID string, symbol exchange.Symbol, side exchange.Side, size float64) {
 
 	record := db.OrderHistory{

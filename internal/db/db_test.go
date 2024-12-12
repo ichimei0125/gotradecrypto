@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/ichimei0125/gotradecrypto/internal/db"
+	"github.com/ichimei0125/gotradecrypto/internal/exchange"
+	"github.com/ichimei0125/gotradecrypto/internal/exchange/bitflyer"
 )
 
 func TestOpenDB(t *testing.T) {
@@ -82,4 +84,22 @@ func TestGetErr(t *testing.T) {
 	for _, err := range errs {
 		t.Log(err.CreatedAt)
 	}
+}
+
+func TestDBExecution(t *testing.T) {
+	db.InitDB()
+	defer db.CloseDB()
+	d := bitflyer.CustomTime{
+		Time: time.Now(),
+	}
+
+	exe := []bitflyer.Execution{{
+		ID:       425436,
+		Side:     "TestSide",
+		Size:     543.5,
+		Price:    101.1,
+		ExecDate: d,
+	}}
+
+	db.BulkInsertDBExecution(exe, new(bitflyer.Bitflyer).Name(), string(exchange.XRPJPY))
 }

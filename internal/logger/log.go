@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/ichimei0125/gotradecrypto/internal/common"
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
@@ -20,12 +21,12 @@ var (
 func getFileName(e exchange.Exchange, s exchange.Symbol) string {
 	filename := "app.log"
 	if e != nil && s != "" {
-		filename = e.Name() + "_" + string(s) + ".log"
+		filename = common.GetUniqueName(e.Name(), string(s)) + ".log"
 	}
 	return filename
 }
 
-// InitLogger 初始化日志
+// InitLogger
 func InitLogger(e exchange.Exchange, symbol exchange.Symbol, maxSize, maxBackups, maxAge int, compress bool) {
 	filename := getFileName(e, symbol)
 	path := path.Join("log", filename)
@@ -44,11 +45,10 @@ func InitLogger(e exchange.Exchange, symbol exchange.Symbol, maxSize, maxBackups
 	once := onces[filename]
 	once.Do(func() {
 
-		// 创建日志目录（如果不存在）
 		dir := getDir(path)
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
 			if err := os.MkdirAll(dir, 0755); err != nil {
-				log.Fatalf("无法创建日志目录: %v", err)
+				log.Fatalf("Error on create dir: %v", err)
 			}
 		}
 
@@ -92,7 +92,15 @@ func Info(e exchange.Exchange, s exchange.Symbol, v ...interface{}) {
 }
 
 // Error 记录错误级别日志
-func Error(e exchange.Exchange, s exchange.Symbol, v ...interface{}) {
+func Error(v ...interface{}) {
+	var e exchange.Exchange = nil
+	var s exchange.Symbol = ""
+
+	if len(v) >= 3 {
+		e, s = v[0].(exchange.Exchange), v[1].(exchange.Symbol)
+		v = v[2:]
+	}
+
 	logger := getLogger(e, s)
 	if logger == nil {
 		return

@@ -19,7 +19,9 @@ func InitDB() *gorm.DB {
 		panic(fmt.Sprintf("db cannot create folder: %s", err.Error()))
 	}
 
-	_db, err = gorm.Open(sqlite.Open("data/local.db"), &gorm.Config{})
+	_db, err = gorm.Open(sqlite.Open("data/local.db"), &gorm.Config{
+		CreateBatchSize: 1000,
+	})
 	if err != nil {
 		panic(fmt.Sprintf("db cannot open: %s", err.Error()))
 	}

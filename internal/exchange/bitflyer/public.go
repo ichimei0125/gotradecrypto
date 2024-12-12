@@ -7,52 +7,120 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/ichimei0125/gotradecrypto/internal/common"
+	"github.com/ichimei0125/gotradecrypto/internal/db"
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
+)
+
+var (
+	cache_execution sync.Map
+	db_lastest_time sync.Map
 )
 
 func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 	var oldest_id int64 = 0
+	var lastest_id int64 = 0
+	uniqueName := common.GetUniqueName(new(Bitflyer).Name(), string(s))
 
 	klineMap := make(map[time.Time]exchange.KLine)
 	for _, kline := range *cache {
 		klineMap[kline.OpenTime] = kline
 	}
 
-	for {
-		excutions := FetchExecution(s, 0, oldest_id, 0)
-		if len(excutions) <= 0 {
-			// error
-			*cache = []exchange.KLine{}
-			break
-		}
-		oldest_id = excutions[len(excutions)-1].Id
-
-		new_kline := convertExetutionsToKLine(excutions)
-
-		for _, kline := range new_kline {
-			klineMap[kline.OpenTime] = kline
-		}
-
-		// 将 map 转换为切片
-		merged := make([]exchange.KLine, 0, len(klineMap))
-		for _, kline := range klineMap {
-			merged = append(merged, kline)
-		}
-
-		if len(merged) >= common.KLINE_LENGTH {
-			// 按时间倒序排序
-			sort.Slice(merged, func(i, j int) bool {
-				return merged[i].OpenTime.After(merged[j].OpenTime)
-			})
-
-			*cache = merged[:common.KLINE_LENGTH:common.KLINE_LENGTH]
-
-			break
+	// load cache
+	start_time := common.GetNow().Add(-time.Duration(common.KLINE_INTERVAL*(common.KLINE_LENGTH+5)) * time.Minute)
+	_, ok := cache_execution.Load(uniqueName)
+	if !ok && len(*cache) <= 0 {
+		db_executions := []Execution{}
+		db.GetDBExecutionAfter(start_time, new(Bitflyer).Name(), string(s)).Find(&db_executions)
+		if len(db_executions) > 0 {
+			cache_execution.Store(uniqueName, db_executions)
+			lastest_id = db_executions[0].ID
+			db_lastest_time.Store(uniqueName, db_executions[0].ExecDate.Time)
 		}
 	}
+
+	// get data to cache
+	for {
+		executions := FetchExecution(s, 0, oldest_id, lastest_id)
+		// cache
+		cached, ok := cache_execution.Load(uniqueName)
+		if ok {
+			cached = append(executions, cached.([]Execution)...)
+		} else {
+			cached = executions
+		}
+		cache_execution.Store(uniqueName, cached)
+
+		oldest_id = executions[len(executions)-1].ID
+		lastest_id = 0
+
+		// empty range between db data?
+		_db_lastest_time, ok := db_lastest_time.Load(uniqueName)
+		if ok {
+			if _db_lastest_time.(time.Time).After(executions[len(executions)-1].ExecDate.Time) {
+				// sort by: new -> old
+				_cached := cached.([]Execution)
+				sort.Slice(_cached, func(i, j int) bool {
+					return _cached[i].ExecDate.Time.After(_cached[j].ExecDate.Time)
+				})
+				cache_execution.Store(uniqueName, cached)
+
+				break
+			}
+		}
+	}
+
+	// generate & update kline
+	cached, _ := cache_execution.Load(uniqueName)
+	new_kline := convertExetutionsToKLine(cached.([]Execution), common.KLINE_INTERVAL)
+	// rm repeat kline, old kline's indicators will keep, only append new
+	for _, kline := range new_kline {
+		if _, exist := klineMap[kline.OpenTime]; !exist {
+			klineMap[kline.OpenTime] = kline
+		}
+	}
+	merged := make([]exchange.KLine, 0, len(klineMap))
+	for _, kline := range klineMap {
+		merged = append(merged, kline)
+	}
+	// order: new -> old
+	sort.Slice(merged, func(i, j int) bool {
+		return merged[i].OpenTime.After(merged[j].OpenTime)
+	})
+	*cache = merged[:common.KLINE_LENGTH:common.KLINE_LENGTH]
+
+	// cache
+	_executions, loaded := cache_execution.Load(uniqueName)
+	if !loaded {
+		return
+	}
+	executions := _executions.([]Execution)
+	__db_lastest_time, ok_db_lastest_time := db_lastest_time.Load(uniqueName)
+	_db_lastest_time := __db_lastest_time.(time.Time)
+
+	insert := make([]Execution, 0, len(executions))
+	new_cache := make([]Execution, 0, len(executions))
+	if !ok_db_lastest_time {
+		insert = executions
+	} else {
+		for _, e := range executions {
+			if e.ExecDate.Time.After(_db_lastest_time) {
+				insert = append(insert, e)
+			}
+			if e.ExecDate.Time.After(_db_lastest_time.Add(time.Duration(-common.KLINE_INTERVAL*3) * time.Minute)) {
+				new_cache = append(new_cache, e)
+			}
+		}
+	}
+	// db insert
+	db.BulkInsertDBExecution(insert, new(Bitflyer).Name(), string(s))
+	db_lastest_time.Store(uniqueName, insert[0].ExecDate.Time)
+	// update cache
+	cache_execution.Store(uniqueName, new_cache)
 }
 
 func bitflyerPublicAPICore(url string) (*http.Response, error) {
@@ -109,16 +177,15 @@ func FetchExecution(s exchange.Symbol, count int, before_id int64, after_id int6
 	return executions
 }
 
-type byExecDate []Execution
+// type byExecDate []Execution
 
-func (a byExecDate) Len() int           { return len(a) }
-func (a byExecDate) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a byExecDate) Less(i, j int) bool { return a[i].ExecDate.Time.Before(a[j].ExecDate.Time) }
+// func (a byExecDate) Len() int           { return len(a) }
+// func (a byExecDate) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+// func (a byExecDate) Less(i, j int) bool { return a[i].ExecDate.Time.Before(a[j].ExecDate.Time) }
 
-func convertExetutionsToKLine(executions []Execution) []exchange.KLine {
-	sort.Sort(sort.Reverse(byExecDate(executions)))
-
-	minute_unit := common.KLINE_INTERVAL
+func convertExetutionsToKLine(executions []Execution, minute_unit int) []exchange.KLine {
+	// sort.Sort(sort.Reverse(byExecDate(executions)))
+	// use sorted ?
 
 	// 将最新的时间依据时间单位，选择最近的区间
 	// 比如5分钟的时间单位: 16:00, 16:05, 16:10...
