@@ -33,7 +33,7 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 	// load cache
 	start_time := common.GetNow().Add(-time.Duration(common.KLINE_INTERVAL*(common.KLINE_LENGTH+5)) * time.Minute)
 	_, ok := cache_execution.Load(uniqueName)
-	if !ok {
+	if !ok && len(*cache) <= 0 {
 		db_executions := []Execution{}
 		db.GetDBExecutionAfter(start_time, new(Bitflyer).Name(), string(s)).Find(&db_executions)
 		if len(db_executions) > 0 {
@@ -43,7 +43,7 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 		}
 	}
 
-	// get data
+	// get data to cache
 	for {
 		executions := FetchExecution(s, 0, oldest_id, lastest_id)
 		// cache
@@ -74,7 +74,7 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 		}
 	}
 
-	// update kline
+	// generate & update kline
 	cached, _ := cache_execution.Load(uniqueName)
 	new_kline := convertExetutionsToKLine(cached.([]Execution), common.KLINE_INTERVAL)
 	// rm repeat kline, old kline's indicators will keep, only append new
@@ -111,7 +111,7 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 			if e.ExecDate.Time.After(_db_lastest_time) {
 				insert = append(insert, e)
 			}
-			if e.ExecDate.Time.After(start_time) {
+			if e.ExecDate.Time.After(_db_lastest_time.Add(time.Duration(-common.KLINE_INTERVAL*3) * time.Minute)) {
 				new_cache = append(new_cache, e)
 			}
 		}
