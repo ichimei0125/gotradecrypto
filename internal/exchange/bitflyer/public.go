@@ -30,8 +30,6 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 		klineMap[kline.OpenTime] = kline
 	}
 
-	fmt.Println(time.Now())
-
 	// load cache
 	start_time := common.GetNow().Add(-time.Duration(common.KLINE_INTERVAL*(common.KLINE_LENGTH+5)) * time.Minute)
 	_, ok := cache_execution.Load(uniqueName)
@@ -42,61 +40,58 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 			cache_execution.Store(uniqueName, db_executions)
 			lastest_id = db_executions[0].ID
 			db_lastest_time.Store(uniqueName, db_executions[0].ExecDate.Time)
-			fmt.Printf("read from db: %d\n", len(db_executions))
 		}
 	}
 
-	t := 1
+	// get data
 	for {
-		fmt.Printf("send public api times: %d\n", t)
-		t++
 		executions := FetchExecution(s, 0, oldest_id, lastest_id)
-		// sort by: new -> old
-		sort.Slice(executions, func(i, j int) bool {
-			return executions[i].ExecDate.Time.After(executions[j].ExecDate.Time)
-		})
 		// cache
 		cached, ok := cache_execution.Load(uniqueName)
 		if ok {
 			cached = append(executions, cached.([]Execution)...)
-			fmt.Printf("executions 0: %s\n", executions[0].ExecDate.Time)
-			fmt.Printf("executions 1: %s\n", executions[len(executions)-1].ExecDate.Time)
-			fmt.Printf("cached 0: %s\n", cached.([]Execution)[0].ExecDate.Time)
-			fmt.Printf("cached 1: %s\n", cached.([]Execution)[len(cached.([]Execution))-1].ExecDate.Time)
 		} else {
 			cached = executions
-			fmt.Printf("no cached 0: %s\n", cached.([]Execution)[0].ExecDate.Time)
-			fmt.Printf("no cached 1: %s\n", cached.([]Execution)[len(cached.([]Execution))-1].ExecDate.Time)
 		}
 		cache_execution.Store(uniqueName, cached)
 
-		oldest_id = cached.([]Execution)[len(cached.([]Execution))-1].ID
+		oldest_id = executions[len(executions)-1].ID
 		lastest_id = 0
 
-		new_kline := convertExetutionsToKLine(cached.([]Execution), common.KLINE_INTERVAL)
+		// empty range between db data?
+		_db_lastest_time, ok := db_lastest_time.Load(uniqueName)
+		if ok {
+			if _db_lastest_time.(time.Time).After(executions[len(executions)-1].ExecDate.Time) {
+				// sort by: new -> old
+				_cached := cached.([]Execution)
+				sort.Slice(_cached, func(i, j int) bool {
+					return _cached[i].ExecDate.Time.After(_cached[j].ExecDate.Time)
+				})
+				cache_execution.Store(uniqueName, cached)
 
-		// rm repeat
-		for _, kline := range new_kline {
-			klineMap[kline.OpenTime] = kline
-		}
-		merged := make([]exchange.KLine, 0, len(klineMap))
-		for _, kline := range klineMap {
-			merged = append(merged, kline)
-		}
-
-		fmt.Printf("merged len: %d\n", len(merged))
-
-		if len(merged) >= common.KLINE_LENGTH {
-			// 按时间倒序排序
-			sort.Slice(merged, func(i, j int) bool {
-				return merged[i].OpenTime.After(merged[j].OpenTime)
-			})
-
-			*cache = merged[:common.KLINE_LENGTH:common.KLINE_LENGTH]
-
-			break
+				break
+			}
 		}
 	}
+
+	// update kline
+	cached, _ := cache_execution.Load(uniqueName)
+	new_kline := convertExetutionsToKLine(cached.([]Execution), common.KLINE_INTERVAL)
+	// rm repeat kline, old kline's indicators will keep, only append new
+	for _, kline := range new_kline {
+		if _, exist := klineMap[kline.OpenTime]; !exist {
+			klineMap[kline.OpenTime] = kline
+		}
+	}
+	merged := make([]exchange.KLine, 0, len(klineMap))
+	for _, kline := range klineMap {
+		merged = append(merged, kline)
+	}
+	// order: new -> old
+	sort.Slice(merged, func(i, j int) bool {
+		return merged[i].OpenTime.After(merged[j].OpenTime)
+	})
+	*cache = merged[:common.KLINE_LENGTH:common.KLINE_LENGTH]
 
 	// cache
 	_executions, loaded := cache_execution.Load(uniqueName)
@@ -126,8 +121,6 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 	db_lastest_time.Store(uniqueName, insert[0].ExecDate.Time)
 	// update cache
 	cache_execution.Store(uniqueName, new_cache)
-
-	fmt.Printf("new_cache len: %d\n", len(new_cache))
 }
 
 func bitflyerPublicAPICore(url string) (*http.Response, error) {
