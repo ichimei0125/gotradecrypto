@@ -2,6 +2,8 @@ package bitflyer
 
 import (
 	"bytes"
+	"database/sql/driver"
+	"fmt"
 	"time"
 )
 
@@ -21,6 +23,9 @@ type Execution struct {
 	ExecDate                   CustomTime `json:"exec_date" gorm:"not null;index"`
 	BuyChildOrderAcceptanceId  string     `json:"buy_child_order_acceptance_id"`
 	SellChildOrderAcceptanceId string     `json:"sell_child_order_acceptance_id"`
+	IsSync                     bool       `gorm:"default:false"`
+	CreatedAt                  time.Time  `gorm:"not null"`
+	UpdatedAt                  time.Time  `gorm:"not null"`
 }
 
 type CustomTime struct {
@@ -29,17 +34,14 @@ type CustomTime struct {
 
 var TimeLayout = "2006-01-02T15:04:05.000"
 
-// 尝试解析的时间格式列表
 var timeFormats = []string{
-	"2006-01-02T15:04:05.000", // 原始格式
-	"2006-01-02T15:04:05.00",  // 两位毫秒数
-	"2006-01-02T15:04:05.0",   // 一位毫秒数
-	"2006-01-02T15:04:05",     // 无毫秒数
+	"2006-01-02T15:04:05.000",
+	"2006-01-02T15:04:05.00",
+	"2006-01-02T15:04:05.0",
+	"2006-01-02T15:04:05",
 }
 
-// UnmarshalJSON 用于自定义时间格式的解析
 func (ct *CustomTime) UnmarshalJSON(b []byte) error {
-	// 去除时间字符串两端的引号
 	s := bytes.Trim(b, "\"")
 	if len(s) == 0 {
 		return nil
@@ -53,7 +55,35 @@ func (ct *CustomTime) UnmarshalJSON(b []byte) error {
 		}
 		parseErr = err
 	}
-	return parseErr // 返回最后一个解析错误
+	return parseErr
+}
+
+// for gorm Value interface
+func (ct CustomTime) Value() (driver.Value, error) {
+	return ct.Time.Format(TimeLayout), nil
+}
+func (ct *CustomTime) Scan(value interface{}) error {
+	switch v := value.(type) {
+	case time.Time:
+		ct.Time = v
+		return nil
+	case string:
+		t, err := time.Parse(TimeLayout, v)
+		if err != nil {
+			return fmt.Errorf("invalid time string: %v", err)
+		}
+		ct.Time = t
+		return nil
+	case []byte:
+		t, err := time.Parse(TimeLayout, string(v))
+		if err != nil {
+			return fmt.Errorf("invalid time byte array: %v", err)
+		}
+		ct.Time = t
+		return nil
+	default:
+		return fmt.Errorf("unsupported type: %T", value)
+	}
 }
 
 func CustomTimeToString(t CustomTime) string {
