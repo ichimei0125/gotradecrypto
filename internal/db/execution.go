@@ -10,7 +10,7 @@ import (
 )
 
 func getDBExecutionTableName(exchangeName, symbol string) string {
-	return common.GetUnionName(exchangeName, symbol) + "_execution"
+	return common.GetUniqueName(exchangeName, symbol) + "_execution"
 }
 
 func BulkInsertDBExecution(executions interface{}, exchangeName, symbol string) {

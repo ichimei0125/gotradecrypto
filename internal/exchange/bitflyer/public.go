@@ -15,48 +15,65 @@ import (
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 )
 
-var cache_execution sync.Map
+var (
+	cache_execution sync.Map
+	db_lastest_time sync.Map
+)
 
 func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 	var oldest_id int64 = 0
 	var lastest_id int64 = 0
-	var db_latstet_time time.Time
-	uninoName := common.GetUnionName(new(Bitflyer).Name(), string(s))
+	uniqueName := common.GetUniqueName(new(Bitflyer).Name(), string(s))
 
 	klineMap := make(map[time.Time]exchange.KLine)
 	for _, kline := range *cache {
 		klineMap[kline.OpenTime] = kline
 	}
 
+	fmt.Println(time.Now())
+
 	// load cache
 	start_time := common.GetNow().Add(-time.Duration(common.KLINE_INTERVAL*(common.KLINE_LENGTH+5)) * time.Minute)
-	db_executions := []Execution{}
-	db.GetDBExecutionAfter(start_time, new(Bitflyer).Name(), string(s)).Find(&db_executions)
-	if len(db_executions) > 0 {
-		cache_execution.Store(uninoName, db_executions)
-		lastest_id = db_executions[0].ID
-		db_latstet_time = db_executions[0].ExecDate.Time
+	_, ok := cache_execution.Load(uniqueName)
+	if !ok {
+		db_executions := []Execution{}
+		db.GetDBExecutionAfter(start_time, new(Bitflyer).Name(), string(s)).Find(&db_executions)
+		if len(db_executions) > 0 {
+			cache_execution.Store(uniqueName, db_executions)
+			lastest_id = db_executions[0].ID
+			db_lastest_time.Store(uniqueName, db_executions[0].ExecDate.Time)
+			fmt.Printf("read from db: %d\n", len(db_executions))
+		}
 	}
 
+	t := 1
 	for {
+		fmt.Printf("send public api times: %d\n", t)
+		t++
 		executions := FetchExecution(s, 0, oldest_id, lastest_id)
 		// sort by: new -> old
 		sort.Slice(executions, func(i, j int) bool {
 			return executions[i].ExecDate.Time.After(executions[j].ExecDate.Time)
 		})
 		// cache
-		cached, ok := cache_execution.Load(uninoName)
+		cached, ok := cache_execution.Load(uniqueName)
 		if ok {
 			cached = append(executions, cached.([]Execution)...)
+			fmt.Printf("executions 0: %s\n", executions[0].ExecDate.Time)
+			fmt.Printf("executions 1: %s\n", executions[len(executions)-1].ExecDate.Time)
+			fmt.Printf("cached 0: %s\n", cached.([]Execution)[0].ExecDate.Time)
+			fmt.Printf("cached 1: %s\n", cached.([]Execution)[len(cached.([]Execution))-1].ExecDate.Time)
 		} else {
 			cached = executions
+			fmt.Printf("no cached 0: %s\n", cached.([]Execution)[0].ExecDate.Time)
+			fmt.Printf("no cached 1: %s\n", cached.([]Execution)[len(cached.([]Execution))-1].ExecDate.Time)
 		}
-		cache_execution.Store(uninoName, cached)
+		cache_execution.Store(uniqueName, cached)
 
-		oldest_id = executions[len(executions)-1].ID
+		oldest_id = cached.([]Execution)[len(cached.([]Execution))-1].ID
 		lastest_id = 0
 
-		new_kline := convertExetutionsToKLine(executions, common.KLINE_INTERVAL)
+		new_kline := convertExetutionsToKLine(cached.([]Execution), common.KLINE_INTERVAL)
 
 		// rm repeat
 		for _, kline := range new_kline {
@@ -66,6 +83,8 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 		for _, kline := range klineMap {
 			merged = append(merged, kline)
 		}
+
+		fmt.Printf("merged len: %d\n", len(merged))
 
 		if len(merged) >= common.KLINE_LENGTH {
 			// 按时间倒序排序
@@ -79,25 +98,36 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 		}
 	}
 
-	// cache -> db
-	_executions, loaded := cache_execution.LoadAndDelete(uninoName)
+	// cache
+	_executions, loaded := cache_execution.Load(uniqueName)
 	if !loaded {
 		return
 	}
-
 	executions := _executions.([]Execution)
+	__db_lastest_time, ok_db_lastest_time := db_lastest_time.Load(uniqueName)
+	_db_lastest_time := __db_lastest_time.(time.Time)
+
 	insert := make([]Execution, 0, len(executions))
-	if db_latstet_time.IsZero() {
-		insert = []Execution{}
+	new_cache := make([]Execution, 0, len(executions))
+	if !ok_db_lastest_time {
+		insert = executions
 	} else {
 		for _, e := range executions {
-			if e.ExecDate.Time.After(db_latstet_time) {
+			if e.ExecDate.Time.After(_db_lastest_time) {
 				insert = append(insert, e)
+			}
+			if e.ExecDate.Time.After(start_time) {
+				new_cache = append(new_cache, e)
 			}
 		}
 	}
-
+	// db insert
 	db.BulkInsertDBExecution(insert, new(Bitflyer).Name(), string(s))
+	db_lastest_time.Store(uniqueName, insert[0].ExecDate.Time)
+	// update cache
+	cache_execution.Store(uniqueName, new_cache)
+
+	fmt.Printf("new_cache len: %d\n", len(new_cache))
 }
 
 func bitflyerPublicAPICore(url string) (*http.Response, error) {

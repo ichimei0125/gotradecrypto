@@ -21,7 +21,7 @@ var (
 func getFileName(e exchange.Exchange, s exchange.Symbol) string {
 	filename := "app.log"
 	if e != nil && s != "" {
-		filename = common.GetUnionName(e.Name(), string(s)) + ".log"
+		filename = common.GetUniqueName(e.Name(), string(s)) + ".log"
 	}
 	return filename
 }
