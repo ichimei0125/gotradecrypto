@@ -62,8 +62,18 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 		_db_lastest_time, ok := db_lastest_time.Load(uniqueName)
 		if ok {
 			if _db_lastest_time.(time.Time).After(executions[len(executions)-1].ExecDate.Time) {
-				// sort by: new -> old
 				_cached := cached.([]Execution)
+				// rm repeat
+				unique_cache := make(map[time.Time]Execution)
+				for _, __cached := range _cached {
+					unique_cache[__cached.ExecDate.Time] = __cached
+				}
+				// map -> slice
+				_cached = make([]Execution, 0, len(_cached))
+				for _, uc := range unique_cache {
+					_cached = append(_cached, uc)
+				}
+				// sort by: new -> old
 				sort.Slice(_cached, func(i, j int) bool {
 					return _cached[i].ExecDate.Time.After(_cached[j].ExecDate.Time)
 				})
