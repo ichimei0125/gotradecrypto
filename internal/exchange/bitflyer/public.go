@@ -43,9 +43,15 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 		}
 	}
 
+	is_update := false
 	// get data to cache
 	for {
 		executions := FetchExecution(s, 0, oldest_id, lastest_id)
+		if len(executions) <= 0 {
+			is_update = true
+			break
+		}
+
 		// cache
 		cached, ok := cache_execution.Load(uniqueName)
 		if ok {
@@ -82,6 +88,10 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 				break
 			}
 		}
+	}
+
+	if !is_update && len(*cache) > 0 {
+		return
 	}
 
 	// generate & update kline
@@ -127,8 +137,10 @@ func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
 		}
 	}
 	// db insert
-	db.BulkInsertDBExecution(insert, new(Bitflyer).Name(), string(s))
-	db_lastest_time.Store(uniqueName, insert[0].ExecDate.Time)
+	if len(insert) > 0 {
+		db.BulkInsertDBExecution(insert, new(Bitflyer).Name(), string(s))
+		db_lastest_time.Store(uniqueName, insert[0].ExecDate.Time)
+	}
 	// update cache
 	cache_execution.Store(uniqueName, new_cache)
 }
