@@ -32,7 +32,7 @@ func (b *Bitflyer) CheckUnfinishedOrder(symbol exchange.Symbol) {
 	in_time := common.GetNow().Add(time.Duration(-common.ORDER_WAIT_MINUTE) * time.Minute)
 
 	for _, oh := range oh_list {
-		if oh.CreatedAt.After(in_time) {
+		if oh.CreatedAt.Before(in_time) {
 			continue
 		}
 
@@ -45,7 +45,7 @@ func (b *Bitflyer) CheckUnfinishedOrder(symbol exchange.Symbol) {
 			panic(fmt.Sprintf("strange child order get by id %s", msg))
 		}
 
-		if child_order[0].ChildOrderState == getOrderStatus(exchange.COMPLETED) {
+		if len(child_order) <= 0 || child_order[0].ChildOrderState == getOrderStatus(exchange.COMPLETED) {
 			db.Delete(&oh)
 			continue
 		}
