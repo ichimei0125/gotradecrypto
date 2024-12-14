@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/ichimei0125/gotradecrypto/internal/common"
+	"github.com/ichimei0125/gotradecrypto/internal/config"
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
@@ -29,7 +30,8 @@ func getFileName(e exchange.Exchange, s exchange.Symbol) string {
 // InitLogger
 func InitLogger(e exchange.Exchange, symbol exchange.Symbol, maxSize, maxBackups, maxAge int, compress bool) {
 	filename := getFileName(e, symbol)
-	path := path.Join("log", filename)
+	log_folder := config.GetEnvVar(common.ENV_LOG_PATH[0], common.ENV_LOG_PATH[1])
+	path := path.Join(log_folder, filename)
 	mutex.Lock()
 	if onces == nil {
 		onces = make(map[string]*sync.Once)

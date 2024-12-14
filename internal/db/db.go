@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/ichimei0125/gotradecrypto/internal/common"
+	"github.com/ichimei0125/gotradecrypto/internal/config"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -19,7 +21,8 @@ func InitDB() *gorm.DB {
 		panic(fmt.Sprintf("db cannot create folder: %s", err.Error()))
 	}
 
-	_db, err = gorm.Open(sqlite.Open("data/local.db"), &gorm.Config{
+	db_path := config.GetEnvVar(common.ENV_DB_PATH[0], common.ENV_DB_PATH[1])
+	_db, err = gorm.Open(sqlite.Open(db_path), &gorm.Config{
 		CreateBatchSize: 1000,
 	})
 	if err != nil {

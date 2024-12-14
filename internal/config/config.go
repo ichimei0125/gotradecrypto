@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/ichimei0125/gotradecrypto/internal/common"
 	"gopkg.in/yaml.v3"
 )
 
@@ -21,11 +22,7 @@ type Config struct {
 }
 
 func GetConfig() Config {
-	// 从环境变量读取配置文件路径
-	configPath, exist := os.LookupEnv("CONFIG_PATH")
-	if !exist {
-		configPath = "config.yaml" // 默认值
-	}
+	configPath := GetEnvVar(common.ENV_CONFIG_PATH[0], common.ENV_CONFIG_PATH[1])
 
 	// 读取配置文件
 	data, err := os.ReadFile(configPath)
