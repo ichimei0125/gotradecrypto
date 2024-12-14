@@ -24,7 +24,7 @@ func handlePanic() {
 }
 
 func main() {
-	defer handlePanic()
+	// defer handlePanic()
 
 	// bitflyer
 	var _bitflyer = new(bitflyer.Bitflyer)
@@ -62,13 +62,13 @@ func main() {
 		for _, t := range trades {
 			localT := t // 闭包变量捕获问题
 			go func(wg *sync.WaitGroup) {
-				defer handlePanic()
+				// defer handlePanic()
 				defer wg.Done()
 				localT.exchange.FetchKLine(localT.symbol, localT.kine)
 				indicator.GetIndicators(localT.kine)
 
 				go func() {
-					defer handlePanic()
+					// defer handlePanic()
 					trade.Trade(localT.exchange, localT.symbol, localT.kine)
 				}()
 			}(wg)
