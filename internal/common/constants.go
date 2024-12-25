@@ -16,6 +16,5 @@ var (
 
 var (
 	ENV_CONFIG_PATH [2]string = [2]string{"GOTRADECRYPTO_CONFIG_PATH", "config.yaml"}
-	ENV_DB_PATH     [2]string = [2]string{"GOTRADECRYPTO_DB_PATH", "data/local.db"}
 	ENV_LOG_PATH    [2]string = [2]string{"GOTRADECRYPTO_LOG_PATH", "log"}
 )
