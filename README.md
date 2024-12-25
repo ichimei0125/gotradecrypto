@@ -32,10 +32,10 @@ go を勉強したく、また最近仮想通貨は話題になり、本プロ�
 |   |-- exchange               # 取引所
 |   |   |-- bitflyer           # 現在はbitflyerのみ実装
 |   |   |-- exchange.go        # ※1
-|   |-- indicator # 指標の計算
+|   |-- indicator              # 指標の計算
 |   `-- trade
 |       |-- klinestrategies.go # 買い/売り判断:
-|       |-- trade.go # 取引 
+|       |-- trade.go           # 取引 
 |       `-- tradestrategies.go # 具体的な取引:
 ```
 
@@ -58,5 +58,6 @@ go を勉強したく、また最近仮想通貨は話題になり、本プロ�
 ## milestone
 - [x] v0.1 複数仮想通貨取扱
 - [x] v0.2 約定履歴をdbに書き込む、API節約・データ分析目的
+- [ ] v0.3 シミュレーター
 - [ ] v0.5 AIを利用して、価格予測 
 - [ ] v0.9 より豊富なデプロイ方法（docker, クラウドなど）
