@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ichimei0125/gotradecrypto/internal/common"
 	"github.com/ichimei0125/gotradecrypto/internal/db"
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 	"github.com/ichimei0125/gotradecrypto/internal/logger"
@@ -163,7 +164,12 @@ func FetchTrades(since time.Time, symbol string) []exchange.Trade {
 		trades = _trades.([]exchange.Trade)
 	} else {
 		// load from db if not cached
-		trades, _ = db.GetDBTradeAfter(since, new(Bitflyer).Name(), string(symbol))
+		var err error
+		trades, err = db.GetDBTradeAfter(since, new(Bitflyer).Name(), string(symbol))
+		// get max history data for first time
+		if err != nil {
+			since = common.GetNow().Add(-30 * 24 * time.Hour).UTC()
+		}
 	}
 	if len(trades) > 0 {
 		// update since if cached or loaded from db
@@ -211,7 +217,7 @@ func FetchTrades(since time.Time, symbol string) []exchange.Trade {
 	cache_trades.Store(symbol, trades)
 	// insert db
 	// TODO: reduce insert frequency
-	// db.BulkInsertDBTrade(trades, new(Bitflyer).Name(), string(s))
+	db.BulkInsertDBTrade(newTrades, new(Bitflyer).Name(), symbol)
 
 	return trades
 }

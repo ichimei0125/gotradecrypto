@@ -63,7 +63,7 @@ func main() {
 				// defer handlePanic()
 				defer wg.Done()
 
-				since := time.Date(2025, 1, 10, 0, 0, 0, 0, time.UTC)
+				since := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
 				test := bitflyer.FetchTrades(since, string(localT.symbol))
 				fmt.Println(test[0].ExecutionTime)
 				// localT.exchange.FetchCandleSticks(localT.symbol, localT.kine)

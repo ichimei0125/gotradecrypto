@@ -12,5 +12,5 @@ func TestFetchTrades(t *testing.T) {
 	db.InitDB()
 	defer db.CloseDB()
 	since := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
-	bitflyer.FetchTrades(since, "BTC_JPY")
+	bitflyer.FetchTrades(since, "XLM_JPY")
 }
