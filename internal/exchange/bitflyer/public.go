@@ -181,7 +181,7 @@ func FetchTrades(since time.Time, symbol string) []exchange.Trade {
 	for {
 		_executions := FetchExecution(symbol, -1, before_id, -1)
 		before_id = _executions[len(_executions)-1].ID
-		_since := _executions[0].ExecDate.Time
+		_since := _executions[len(_executions)-1].ExecDate.Time
 
 		executions = append(executions, _executions...)
 		if _since.Before(since) {
