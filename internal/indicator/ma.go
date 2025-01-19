@@ -7,7 +7,7 @@ import (
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 )
 
-func sma(data *[]exchange.KLine, period int) {
+func sma(data *[]exchange.CandleStick, period int) {
 	start_index := len(*data) - period
 	d := *data
 
@@ -20,7 +20,7 @@ func sma(data *[]exchange.KLine, period int) {
 	}
 }
 
-func ema(data *[]exchange.KLine, period int) {
+func ema(data *[]exchange.CandleStick, period int) {
 	d := *data
 	alpha := math.Round(2.0/float64(period+1)*1000) / 1000 // 小数点後３位
 

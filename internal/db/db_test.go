@@ -6,7 +6,6 @@ import (
 
 	"github.com/ichimei0125/gotradecrypto/internal/db"
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
-	"github.com/ichimei0125/gotradecrypto/internal/exchange/bitflyer"
 )
 
 func TestOpenDB(t *testing.T) {
@@ -86,20 +85,54 @@ func TestGetErr(t *testing.T) {
 	}
 }
 
-func TestDBExecution(t *testing.T) {
+func TestDBTrade(t *testing.T) {
 	db.InitDB()
 	defer db.CloseDB()
-	d := bitflyer.CustomTime{
-		Time: time.Now(),
+
+	_trade1 := exchange.Trade{
+		ID:            "test1",
+		Side:          "",
+		Size:          12.4,
+		Price:         100.1,
+		ExecutionTime: time.Now().UTC(),
 	}
+	// _trade2 := db.Trade{
+	// 	ID:            "test2",
+	// 	Side:          "",
+	// 	Size:          14.5,
+	// 	Price:         98.1,
+	// 	ExecutionTime: time.Now().UTC(),
+	// }
+	_trade3 := exchange.Trade{
+		ID:            "test3",
+		Side:          "",
+		Size:          15.6,
+		Price:         130.1,
+		ExecutionTime: time.Now().UTC(),
+	}
+	_trades := []exchange.Trade{_trade1, _trade3}
 
-	exe := []bitflyer.Execution{{
-		ID:       425436,
-		Side:     "TestSide",
-		Size:     543.5,
-		Price:    101.1,
-		ExecDate: d,
-	}}
+	db.BulkInsertDBTrade(_trades, "testExchange", "testSymbol")
+}
 
-	db.BulkInsertDBExecution(exe, new(bitflyer.Bitflyer).Name(), string(exchange.XRPJPY))
+func TestGetDBTrade(t *testing.T) {
+	db.InitDB()
+	defer db.CloseDB()
+
+	_t := time.Date(2024, 12, 5, 0, 0, 0, 0, time.UTC)
+
+	// db_trades, err := db.GetDBTradeAfter(_t, "no_existed_exchange", "no_existed_symbol")
+	db_trades, err := db.GetDBTradeAfter(_t, "bitflyer", "btc_jpy")
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(db_trades[len(db_trades)-1].ExecutionTime)
+}
+
+func TestGetDBTradeFitstLastTime(t *testing.T) {
+	db.InitDB()
+	defer db.CloseDB()
+
+	new, old, _ := db.GetDBTradeMaxMinExecTime("bitflyer", "btc_jpy")
+	t.Log(new, old)
 }

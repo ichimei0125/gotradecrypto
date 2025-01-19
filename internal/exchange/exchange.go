@@ -2,14 +2,17 @@ package exchange
 
 import (
 	"fmt"
+	"sync"
+	"time"
 
+	"github.com/ichimei0125/gotradecrypto/internal/common"
 	"github.com/ichimei0125/gotradecrypto/internal/config"
 )
 
 type Exchange interface {
 	Name() string
 	// Public
-	FetchKLine(symbol Symbol, cache *[]KLine)
+	FetchCandleSticks(symbol Symbol, cache *[]CandleStick)
 	// Private
 	BuyCypto(symbol Symbol, size float64, price float64)
 	SellCypto(symbol Symbol, size float64, price float64)
@@ -21,6 +24,72 @@ type Exchange interface {
 	GetTradeSizeLimit(symbol Symbol) float64
 
 	CheckUnfinishedOrder(symbol Symbol)
+}
+
+// -----Limitiation-----
+var (
+	LimitMap sync.Map
+)
+
+type RateLimiter struct {
+	endTime  time.Time
+	interval time.Duration
+	count    int
+	maxCount int
+}
+
+func GetRateLimiter(name string, interval time.Duration, maxCount int) *RateLimiter {
+	if rl, exists := LimitMap.Load(name); exists {
+		return rl.(*RateLimiter)
+	}
+
+	rl := &RateLimiter{
+		endTime:  common.GetNow().Add(interval),
+		interval: interval,
+		count:    0,
+		maxCount: maxCount,
+	}
+	LimitMap.Store(name, rl)
+	return rl
+}
+
+// Call this, before HTTP request
+func (rl *RateLimiter) Allow() (bool, time.Duration) {
+	now := common.GetNow()
+
+	// reset
+	if now.After(rl.endTime) {
+		rl.endTime = now.Add(rl.interval)
+		rl.count = 0
+	}
+
+	// count (in limit)
+	if rl.count < rl.maxCount {
+		rl.count++
+		return true, 0
+	}
+
+	// over limit
+	waitTime := rl.endTime.Sub(now)
+	return false, waitTime
+}
+
+func CleanupRateLimiters(maxIdleTime time.Duration) {
+	ticker := time.NewTicker(maxIdleTime)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		now := common.GetNow()
+		LimitMap.Range(func(key, value interface{}) bool {
+			rl := value.(*RateLimiter)
+
+			if now.After(rl.endTime.Add(maxIdleTime)) {
+				LimitMap.Delete(key)
+			}
+
+			return true
+		})
+	}
 }
 
 type Balance string
@@ -98,11 +167,11 @@ func GetSecret(exchangeName string) (string, string) {
 type OrderStatus string
 
 const (
-	ACTIVE    OrderStatus = "active"    // オープンな注文
-	COMPLETED OrderStatus = "completed" // 全額が取引完了した注文
-	CANCELED  OrderStatus = "canceled"  // お客様がキャンセルした注文
-	REJECTED  OrderStatus = "rejected"  // 有効期限に到達したため取り消された注文
-	EXPIRED   OrderStatus = "expired"   // 失敗した注文
+	ACTIVE    OrderStatus = "active"
+	COMPLETED OrderStatus = "completed"
+	CANCELED  OrderStatus = "canceled"
+	REJECTED  OrderStatus = "rejected"
+	EXPIRED   OrderStatus = "expired"
 )
 
 type Side string
@@ -110,4 +179,5 @@ type Side string
 const (
 	BUY  Side = "buy"
 	SELL Side = "sell"
+	NONE Side = ""
 )

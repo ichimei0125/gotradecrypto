@@ -13,4 +13,4 @@ dry_run:
     XRP_JPY: true
     FX_BTC_JPY: true
 
-connection_string: tradebot:{password}@tcp(127.0.0.1:3306)/gotradecrypto?charset=utf8mb4&parseTime=True&loc=Local
+connection_string: tradebot:{password}@tcp(127.0.0.1:3306)/tradedb?charset=utf8mb4&parseTime=True&loc=UTC

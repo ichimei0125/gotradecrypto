@@ -6,7 +6,7 @@ import (
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 )
 
-func buy(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.KLine) {
+func buy(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.CandleStick) {
 	d := *data
 	price := d[0].Close
 
@@ -20,7 +20,7 @@ func buy(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.KLine) {
 	}
 }
 
-func sell(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.KLine) {
+func sell(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.CandleStick) {
 	d := *data
 	price := d[0].Close
 

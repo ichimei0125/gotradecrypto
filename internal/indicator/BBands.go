@@ -2,7 +2,7 @@ package indicator
 
 import "github.com/ichimei0125/gotradecrypto/internal/exchange"
 
-func bbands(data *[]exchange.KLine, period int) {
+func bbands(data *[]exchange.CandleStick, period int) {
 	d := *data
 	for i := len(d) - period; i >= 0; i -= 1 {
 		if d[i].SMA == 0.0 {
@@ -17,7 +17,7 @@ func bbands(data *[]exchange.KLine, period int) {
 	}
 }
 
-func maSlope(data *[]exchange.KLine, period int) {
+func maSlope(data *[]exchange.CandleStick, period int) {
 	d := *data
 
 	for i := 0; i < len(d)-period; i++ {

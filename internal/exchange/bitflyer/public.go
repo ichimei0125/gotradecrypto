@@ -6,13 +6,14 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"sort"
+	"slices"
+	"strconv"
 	"sync"
 	"time"
 
-	"github.com/ichimei0125/gotradecrypto/internal/common"
 	"github.com/ichimei0125/gotradecrypto/internal/db"
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
+	"github.com/ichimei0125/gotradecrypto/internal/logger"
 )
 
 var (
@@ -20,147 +21,218 @@ var (
 	db_lastest_time sync.Map
 )
 
-func (b *Bitflyer) FetchKLine(s exchange.Symbol, cache *[]exchange.KLine) {
-	var oldest_id int64 = 0
-	var lastest_id int64 = 0
-	uniqueName := common.GetUniqueName(new(Bitflyer).Name(), string(s))
+var (
+	cache_trades sync.Map
+)
 
-	klineMap := make(map[time.Time]exchange.KLine)
-	for _, kline := range *cache {
-		klineMap[kline.OpenTime] = kline
+func (b *Bitflyer) FetchCandleSticks(s exchange.Symbol, cache *[]exchange.CandleStick) {
+	// 	var oldest_id int64 = 0
+	// 	var lastest_id int64 = 0
+	// 	uniqueName := common.GetUniqueName(new(Bitflyer).Name(), string(s))
+
+	// 	klineMap := make(map[time.Time]exchange.CandleStick)
+	// 	for _, kline := range *cache {
+	// 		klineMap[kline.OpenTime] = kline
+	// 	}
+
+	// 	// load cache
+	// 	start_time := common.GetNow().Add(-time.Duration(common.KLINE_INTERVAL*(common.KLINE_LENGTH+5)) * time.Minute)
+	// 	_, ok := cache_execution.Load(uniqueName)
+	// 	if !ok && len(*cache) <= 0 {
+	// 		db_executions := []Execution{}
+	// 		db.GetDBTradeAfter(start_time, new(Bitflyer).Name(), string(s)).Find(&db_executions)
+	// 		if len(db_executions) > 0 {
+	// 			cache_execution.Store(uniqueName, db_executions)
+	// 			lastest_id = db_executions[0].ID
+	// 			db_lastest_time.Store(uniqueName, db_executions[0].ExecDate.Time)
+	// 		}
+	// 	}
+
+	// 	is_update := false
+	// 	// get data to cache
+	// 	for {
+	// 		executions := FetchExecution(s, 0, oldest_id, lastest_id)
+	// 		if len(executions) <= 0 {
+	// 			is_update = true
+	// 			break
+	// 		}
+
+	// 		// cache
+	// 		cached, ok := cache_execution.Load(uniqueName)
+	// 		if ok {
+	// 			cached = append(executions, cached.([]Execution)...)
+	// 		} else {
+	// 			cached = executions
+	// 		}
+	// 		cache_execution.Store(uniqueName, cached)
+
+	// 		oldest_id = executions[len(executions)-1].ID
+	// 		lastest_id = 0
+
+	// 		// empty range between db data?
+	// 		_db_lastest_time, ok := db_lastest_time.Load(uniqueName)
+	// 		if ok {
+	// 			if _db_lastest_time.(time.Time).After(executions[len(executions)-1].ExecDate.Time) {
+	// 				_cached := cached.([]Execution)
+	// 				// rm repeat
+	// 				unique_cache := make(map[time.Time]Execution)
+	// 				for _, __cached := range _cached {
+	// 					unique_cache[__cached.ExecDate.Time] = __cached
+	// 				}
+	// 				// map -> slice
+	// 				_cached = make([]Execution, 0, len(_cached))
+	// 				for _, uc := range unique_cache {
+	// 					_cached = append(_cached, uc)
+	// 				}
+	// 				// sort by: new -> old
+	// 				sort.Slice(_cached, func(i, j int) bool {
+	// 					return _cached[i].ExecDate.Time.After(_cached[j].ExecDate.Time)
+	// 				})
+	// 				cache_execution.Store(uniqueName, cached)
+
+	// 				break
+	// 			}
+	// 		}
+	// 	}
+
+	// 	if !is_update && len(*cache) > 0 {
+	// 		return
+	// 	}
+
+	// 	// generate & update kline
+	// 	cached, _ := cache_execution.Load(uniqueName)
+	// 	new_kline := convertExetutionsToKLine(cached.([]Execution), common.KLINE_INTERVAL)
+	// 	// rm repeat kline, old kline's indicators will keep, only append new
+	// 	for _, kline := range new_kline {
+	// 		if _, exist := klineMap[kline.OpenTime]; !exist {
+	// 			klineMap[kline.OpenTime] = kline
+	// 		}
+	// 	}
+	// 	merged := make([]exchange.CandleStick, 0, len(klineMap))
+	// 	for _, kline := range klineMap {
+	// 		merged = append(merged, kline)
+	// 	}
+	// 	// order: new -> old
+	// 	sort.Slice(merged, func(i, j int) bool {
+	// 		return merged[i].OpenTime.After(merged[j].OpenTime)
+	// 	})
+	// 	*cache = merged[:common.KLINE_LENGTH:common.KLINE_LENGTH]
+
+	// 	// cache
+	// 	_executions, loaded := cache_execution.Load(uniqueName)
+	// 	if !loaded {
+	// 		return
+	// 	}
+	// 	executions := _executions.([]Execution)
+	// 	__db_lastest_time, ok_db_lastest_time := db_lastest_time.Load(uniqueName)
+	// 	_db_lastest_time := __db_lastest_time.(time.Time)
+
+	// insert := make([]Execution, 0, len(executions))
+	// new_cache := make([]Execution, 0, len(executions))
+	//
+	//	if !ok_db_lastest_time {
+	//		insert = executions
+	//	} else {
+	//
+	//		for _, e := range executions {
+	//			if e.ExecDate.Time.After(_db_lastest_time) {
+	//				insert = append(insert, e)
+	//			}
+	//			if e.ExecDate.Time.After(_db_lastest_time.Add(time.Duration(-common.KLINE_INTERVAL*3) * time.Minute)) {
+	//				new_cache = append(new_cache, e)
+	//			}
+	//		}
+	//	}
+	//
+	// // db insert
+	//
+	//	if len(insert) > 0 {
+	//		db.BulkInsertDBTrade(insert, new(Bitflyer).Name(), string(s))
+	//		db_lastest_time.Store(uniqueName, insert[0].ExecDate.Time)
+	//	}
+	//
+	// // update cache
+	// cache_execution.Store(uniqueName, new_cache)
+}
+
+func FetchTrades(since time.Time, symbol string) []exchange.Trade {
+	var trades []exchange.Trade
+	_trades, ok := cache_trades.Load(symbol)
+	if ok {
+		// load from cache
+		trades = _trades.([]exchange.Trade)
+	} else {
+		// load from db if not cached
+		trades, _ = db.GetDBTradeAfter(since, new(Bitflyer).Name(), string(symbol))
+	}
+	if len(trades) > 0 {
+		// update since if cached or loaded from db
+		since = trades[0].ExecutionTime
 	}
 
-	// load cache
-	start_time := common.GetNow().Add(-time.Duration(common.KLINE_INTERVAL*(common.KLINE_LENGTH+5)) * time.Minute)
-	_, ok := cache_execution.Load(uniqueName)
-	if !ok && len(*cache) <= 0 {
-		db_executions := []Execution{}
-		db.GetDBExecutionAfter(start_time, new(Bitflyer).Name(), string(s)).Find(&db_executions)
-		if len(db_executions) > 0 {
-			cache_execution.Store(uniqueName, db_executions)
-			lastest_id = db_executions[0].ID
-			db_lastest_time.Store(uniqueName, db_executions[0].ExecDate.Time)
-		}
-	}
-
-	is_update := false
-	// get data to cache
+	executions := []Execution{}
+	var before_id int64
 	for {
-		executions := FetchExecution(s, 0, oldest_id, lastest_id)
-		if len(executions) <= 0 {
-			is_update = true
+		_executions := FetchExecution(symbol, -1, before_id, -1)
+		before_id = _executions[len(_executions)-1].ID
+		_since := _executions[0].ExecDate.Time
+
+		executions = append(executions, _executions...)
+		if _since.Before(since) {
 			break
 		}
-
-		// cache
-		cached, ok := cache_execution.Load(uniqueName)
-		if ok {
-			cached = append(executions, cached.([]Execution)...)
+	}
+	// to trades
+	newTrades := convertExecutionsToTrades(&executions)
+	// sort trades ASC, old -> new
+	slices.SortFunc(newTrades, func(a, b exchange.Trade) int {
+		if a.ExecutionTime.Before(b.ExecutionTime) {
+			return -1
+		} else if a.ExecutionTime.After(b.ExecutionTime) {
+			return 1
 		} else {
-			cached = executions
-		}
-		cache_execution.Store(uniqueName, cached)
-
-		oldest_id = executions[len(executions)-1].ID
-		lastest_id = 0
-
-		// empty range between db data?
-		_db_lastest_time, ok := db_lastest_time.Load(uniqueName)
-		if ok {
-			if _db_lastest_time.(time.Time).After(executions[len(executions)-1].ExecDate.Time) {
-				_cached := cached.([]Execution)
-				// rm repeat
-				unique_cache := make(map[time.Time]Execution)
-				for _, __cached := range _cached {
-					unique_cache[__cached.ExecDate.Time] = __cached
-				}
-				// map -> slice
-				_cached = make([]Execution, 0, len(_cached))
-				for _, uc := range unique_cache {
-					_cached = append(_cached, uc)
-				}
-				// sort by: new -> old
-				sort.Slice(_cached, func(i, j int) bool {
-					return _cached[i].ExecDate.Time.After(_cached[j].ExecDate.Time)
-				})
-				cache_execution.Store(uniqueName, cached)
-
-				break
+			// sort by id
+			a_id, _ := strconv.ParseUint(a.ID, 10, 64)
+			b_id, _ := strconv.ParseUint(b.ID, 10, 64)
+			if a_id < b_id {
+				return -1
 			}
+			return 1
 		}
-	}
-
-	if !is_update && len(*cache) > 0 {
-		return
-	}
-
-	// generate & update kline
-	cached, _ := cache_execution.Load(uniqueName)
-	new_kline := convertExetutionsToKLine(cached.([]Execution), common.KLINE_INTERVAL)
-	// rm repeat kline, old kline's indicators will keep, only append new
-	for _, kline := range new_kline {
-		if _, exist := klineMap[kline.OpenTime]; !exist {
-			klineMap[kline.OpenTime] = kline
-		}
-	}
-	merged := make([]exchange.KLine, 0, len(klineMap))
-	for _, kline := range klineMap {
-		merged = append(merged, kline)
-	}
-	// order: new -> old
-	sort.Slice(merged, func(i, j int) bool {
-		return merged[i].OpenTime.After(merged[j].OpenTime)
 	})
-	*cache = merged[:common.KLINE_LENGTH:common.KLINE_LENGTH]
-
-	// cache
-	_executions, loaded := cache_execution.Load(uniqueName)
-	if !loaded {
-		return
-	}
-	executions := _executions.([]Execution)
-	__db_lastest_time, ok_db_lastest_time := db_lastest_time.Load(uniqueName)
-	_db_lastest_time := __db_lastest_time.(time.Time)
-
-	insert := make([]Execution, 0, len(executions))
-	new_cache := make([]Execution, 0, len(executions))
-	if !ok_db_lastest_time {
-		insert = executions
-	} else {
-		for _, e := range executions {
-			if e.ExecDate.Time.After(_db_lastest_time) {
-				insert = append(insert, e)
-			}
-			if e.ExecDate.Time.After(_db_lastest_time.Add(time.Duration(-common.KLINE_INTERVAL*3) * time.Minute)) {
-				new_cache = append(new_cache, e)
-			}
+	// rm duplicated trades
+	for _, newTrade := range newTrades {
+		if newTrade.ExecutionTime.After(since) {
+			trades = append(trades, newTrade)
 		}
 	}
-	// db insert
-	if len(insert) > 0 {
-		db.BulkInsertDBExecution(insert, new(Bitflyer).Name(), string(s))
-		db_lastest_time.Store(uniqueName, insert[0].ExecDate.Time)
-	}
+
 	// update cache
-	cache_execution.Store(uniqueName, new_cache)
+	cache_trades.Store(symbol, trades)
+	// insert db
+	// TODO: reduce insert frequency
+	// db.BulkInsertDBTrade(trades, new(Bitflyer).Name(), string(s))
+
+	return trades
 }
 
 func bitflyerPublicAPICore(url string) (*http.Response, error) {
-	// TODO impl 制限
-	resp, err := http.Get(url)
-	if err != nil {
-		// wait_minute := 5
-		// log.Printf("cannot get bitflyer public api, maybe limited, wait %d minute", wait_minute)
-		panic(fmt.Sprintf("cannot get bitflyer public api, maybe limited \n %s", err.Error()))
-		// time.Sleep(time.Duration(wait_minute) * time.Minute)
-		// return nil, err
+	rl := exchange.GetRateLimiter(new(Bitflyer).Name()+"_Public", 5*time.Minute, (500 - 20))
+	for {
+		ok, waitTime := rl.Allow()
+		if ok {
+			resp, err := http.Get(url)
+			if err != nil {
+				panic(fmt.Sprintf("cannot get bitflyer public api, maybe limited \n %s", err.Error()))
+			}
+			return resp, nil
+		}
+		logger.Info(new(Bitflyer), "", fmt.Sprintf("over HTTP limit, wait %d", waitTime))
+		time.Sleep(waitTime)
 	}
-	return resp, nil
 }
 
-func FetchExecution(s exchange.Symbol, count int, before_id int64, after_id int64) []Execution {
-
-	symbol := getProductCode(s)
+func FetchExecution(symbol string, count int, before_id int64, after_id int64) []Execution {
 
 	endpoint := "/v1/getexecutions"
 	u, err := url.Parse(baseURL + endpoint)
@@ -188,12 +260,15 @@ func FetchExecution(s exchange.Symbol, count int, before_id int64, after_id int6
 	}
 	defer resp.Body.Close()
 
-	// // Decode the JSON response into a slice of Executions
-	var executions []Execution
-	if err := json.NewDecoder(resp.Body).Decode(&executions); err != nil {
-		b, _ := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to read response body: %s", err))
+	}
 
-		panic(fmt.Sprintf("wrong bitflyer public response json:\n%s", string(b)))
+	// Decode JSON
+	var executions []Execution
+	if err := json.Unmarshal(body, &executions); err != nil {
+		panic(fmt.Sprintf("Wrong bitflyer public response JSON:\n%s", string(body)))
 	}
 
 	return executions
@@ -205,7 +280,7 @@ func FetchExecution(s exchange.Symbol, count int, before_id int64, after_id int6
 // func (a byExecDate) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 // func (a byExecDate) Less(i, j int) bool { return a[i].ExecDate.Time.Before(a[j].ExecDate.Time) }
 
-func convertExetutionsToKLine(executions []Execution, minute_unit int) []exchange.KLine {
+func convertExetutionsToKLine(executions []Execution, minute_unit int) []exchange.CandleStick {
 	// sort.Sort(sort.Reverse(byExecDate(executions)))
 	// use sorted ?
 
@@ -216,11 +291,11 @@ func convertExetutionsToKLine(executions []Execution, minute_unit int) []exchang
 	var norm_minute int = (lastest_time.Minute()/minute_unit + 1) * minute_unit
 	time_unit := time.Date(lastest_time.Year(), lastest_time.Month(), lastest_time.Day(), lastest_time.Hour(), norm_minute, 0, 0, lastest_time.Location())
 
-	kline := []exchange.KLine{}
+	kline := []exchange.CandleStick{}
 
 	time_unit = time_unit.Add(-time.Minute * time.Duration(minute_unit))
 
-	tmp_kline := exchange.KLine{
+	tmp_kline := exchange.CandleStick{
 		Open:     executions[0].Price,
 		Close:    executions[0].Price,
 		High:     executions[0].Price,
@@ -232,7 +307,7 @@ func convertExetutionsToKLine(executions []Execution, minute_unit int) []exchang
 		if execution.ExecDate.Time.Before(time_unit) {
 			kline = append(kline, tmp_kline)
 			time_unit = time_unit.Add(-time.Minute * time.Duration(minute_unit))
-			tmp_kline = exchange.KLine{
+			tmp_kline = exchange.CandleStick{
 				Open:     execution.Price,
 				Close:    execution.Price,
 				High:     execution.Price,
@@ -264,6 +339,21 @@ func getProductCode(symbol exchange.Symbol) string {
 	res, exist := productCodeMap[symbol]
 	if !exist {
 		panic(fmt.Sprintf("bitflyer err symbol %s", symbol))
+	}
+	return res
+}
+
+func convertExecutionsToTrades(exections *[]Execution) []exchange.Trade {
+	data := *exections
+	res := []exchange.Trade{}
+	for _, execution := range data {
+		res = append(res, exchange.Trade{
+			ID:            fmt.Sprintf("%d", execution.ID),
+			Side:          execution.Side,
+			Price:         execution.Price,
+			Size:          execution.Size,
+			ExecutionTime: execution.ExecDate.Time,
+		})
 	}
 	return res
 }

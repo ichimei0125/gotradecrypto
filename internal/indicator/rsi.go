@@ -6,7 +6,7 @@ import (
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 )
 
-func rsi(data *[]exchange.KLine, period int) {
+func rsi(data *[]exchange.CandleStick, period int) {
 	d := *data
 
 	// U := make([]float64, len(d)-1)

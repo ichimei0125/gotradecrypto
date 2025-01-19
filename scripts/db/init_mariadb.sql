@@ -1,4 +1,4 @@
-CREATE DATABASE gotradecrypto;
+CREATE DATABASE tradedb;
 
 CREATE USER 'tradebot'@'localhost' IDENTIFIED BY '{password}';
 

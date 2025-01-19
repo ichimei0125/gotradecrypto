@@ -10,9 +10,7 @@ import (
 	"github.com/ichimei0125/gotradecrypto/internal/db"
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 	"github.com/ichimei0125/gotradecrypto/internal/exchange/bitflyer"
-	"github.com/ichimei0125/gotradecrypto/internal/indicator"
 	"github.com/ichimei0125/gotradecrypto/internal/logger"
-	"github.com/ichimei0125/gotradecrypto/internal/trade"
 )
 
 // catch app error
@@ -29,13 +27,13 @@ func main() {
 	// bitflyer
 	var _bitflyer = new(bitflyer.Bitflyer)
 	// bitflyer xrpjpy
-	var klineBitflyerXRPJPY *[]exchange.KLine = &[]exchange.KLine{}
+	var klineBitflyerXRPJPY *[]exchange.CandleStick = &[]exchange.CandleStick{}
 	// bitflyer fx_btc_jpy
 	// var klineBitflyerFXBTCJPY *[]exchange.KLine = &[]exchange.KLine{}
 
 	trades := []struct {
 		exchange exchange.Exchange
-		kine     *[]exchange.KLine
+		kine     *[]exchange.CandleStick
 		symbol   exchange.Symbol
 	}{
 		{_bitflyer, klineBitflyerXRPJPY, exchange.XRPJPY},
@@ -64,13 +62,17 @@ func main() {
 			go func(wg *sync.WaitGroup) {
 				// defer handlePanic()
 				defer wg.Done()
-				localT.exchange.FetchKLine(localT.symbol, localT.kine)
-				indicator.GetIndicators(localT.kine)
 
-				go func() {
-					// defer handlePanic()
-					trade.Trade(localT.exchange, localT.symbol, localT.kine)
-				}()
+				since := time.Date(2025, 1, 10, 0, 0, 0, 0, time.UTC)
+				test := bitflyer.FetchTrades(since, string(localT.symbol))
+				fmt.Println(test[0].ExecutionTime)
+				// localT.exchange.FetchCandleSticks(localT.symbol, localT.kine)
+				// indicator.GetIndicators(localT.kine)
+
+				// go func() {
+				// 	// defer handlePanic()
+				// 	trade.Trade(localT.exchange, localT.symbol, localT.kine)
+				// }()
 			}(wg)
 		}
 

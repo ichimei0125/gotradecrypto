@@ -6,7 +6,7 @@ import (
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 )
 
-func stochastic(data *[]exchange.KLine, period int, kSmoothingPeriod int, dSmoothingPeriod int) {
+func stochastic(data *[]exchange.CandleStick, period int, kSmoothingPeriod int, dSmoothingPeriod int) {
 	d := *data
 
 	RSV := make([]float64, len(d))

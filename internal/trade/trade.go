@@ -16,7 +16,7 @@ const (
 	DoNothing
 )
 
-func Trade(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.KLine) {
+func Trade(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.CandleStick) {
 	e.CheckUnfinishedOrder(symbol)
 
 	d := *data

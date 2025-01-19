@@ -1,11 +1,11 @@
 #! /bin/sh
 
-go build -o gotradecypto cmd/main.go
+go build -o gotradecrypto cmd/main.go
 
-sudo launchctl list | grep gotradecypto
-sudo launchctl bootout system/localhost.gotradecypto.main
-sudo launchctl list | grep gotradecypto
-sudo chown root:wheel localhost.gotradecypto.main.plist 
-sudo cp scripts/mac/launchd/localhost.gotradecypto.main.plist /Library/LaunchDaemons/
-sudo launchctl bootstrap system /Library/LaunchDaemons/localhost.gotradecypto.main.plist
-sudo launchctl list | grep gotradecypto
+sudo launchctl list | grep gotradecrypto
+sudo launchctl bootout system/localhost.gotradecrypto.main
+sudo launchctl list | grep gotradecrypto
+sudo chown root:wheel localhost.gotradecrypto.main.plist 
+sudo cp scripts/mac/launchd/localhost.gotradecrypto.main.plist /Library/LaunchDaemons/
+sudo launchctl bootstrap system /Library/LaunchDaemons/localhost.gotradecrypto.main.plist
+sudo launchctl list | grep gotradecrypto

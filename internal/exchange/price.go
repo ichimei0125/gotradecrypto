@@ -4,8 +4,7 @@ import (
 	"time"
 )
 
-type KLine struct {
-	Symbol   Symbol
+type CandleStick struct {
 	Open     float64
 	Close    float64
 	High     float64
@@ -26,7 +25,15 @@ type KLine struct {
 	RSI             float64
 }
 
-func SumClose(klines []KLine) float64 {
+type Trade struct {
+	ID            string    `gorm:"primaryKey"`
+	Side          string    `gorm:"not null"`
+	Price         float64   `gorm:"not null"`
+	Size          float64   `gorm:"not null"`
+	ExecutionTime time.Time `gorm:"not null;index"`
+}
+
+func SumClose(klines []CandleStick) float64 {
 	var sum float64
 	for _, k := range klines {
 		sum += k.Close
@@ -34,7 +41,7 @@ func SumClose(klines []KLine) float64 {
 	return sum
 }
 
-func GetClose(KLine []KLine) []float64 {
+func GetClose(KLine []CandleStick) []float64 {
 	res := make([]float64, len(KLine))
 	for i, k := range KLine {
 		res[i] = k.Close

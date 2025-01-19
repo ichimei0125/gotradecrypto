@@ -3,7 +3,6 @@ package db
 import (
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"github.com/ichimei0125/gotradecrypto/internal/config"
@@ -15,10 +14,10 @@ var _db *gorm.DB
 
 func InitDB() *gorm.DB {
 	var err error
-	err = os.MkdirAll("data", os.ModePerm)
-	if err != nil {
-		panic(fmt.Sprintf("db cannot create folder: %s", err.Error()))
-	}
+	// err = os.MkdirAll("data", os.ModePerm)
+	// if err != nil {
+	// 	panic(fmt.Sprintf("db cannot create folder: %s", err.Error()))
+	// }
 
 	connectionString := config.GetConfig().ConnectionString
 	_db, err = gorm.Open(mysql.Open(connectionString), &gorm.Config{
@@ -28,17 +27,15 @@ func InitDB() *gorm.DB {
 		panic(fmt.Sprintf("db cannot open: %s", err.Error()))
 	}
 
-	// 配置连接池
-	sqlDB, err := _db.DB() // 获取底层 *sql.DB 对象
+	sqlDB, err := _db.DB()
 	if err != nil {
 		log.Fatalf("Failed to get underlying DB: %v", err)
 	}
 
-	// 设置连接池参数
-	sqlDB.SetMaxIdleConns(10)                  // 最大空闲连接数
-	sqlDB.SetMaxOpenConns(100)                 // 最大打开连接数
-	sqlDB.SetConnMaxIdleTime(5 * time.Minute)  // 空闲连接最大存活时间
-	sqlDB.SetConnMaxLifetime(60 * time.Minute) // 连接最大生命周期
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetMaxOpenConns(100)
+	sqlDB.SetConnMaxIdleTime(5 * time.Minute)
+	sqlDB.SetConnMaxLifetime(60 * time.Minute)
 
 	// init table
 	err = _db.AutoMigrate(new(OrderHistory), new(AppErr))

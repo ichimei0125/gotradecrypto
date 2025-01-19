@@ -16,16 +16,13 @@ func (b *Bitflyer) Name() string {
 }
 
 type Execution struct {
-	ID                         int64      `json:"id" gorm:"primaryKey;autoIncrement:false"`
-	Side                       string     `json:"side" gorm:"not null"`
-	Price                      float64    `json:"price" gorm:"not null"`
-	Size                       float64    `json:"size" gorm:"not null"`
-	ExecDate                   CustomTime `json:"exec_date" gorm:"not null;index"`
+	ID                         int64      `json:"id"`
+	Side                       string     `json:"side"`
+	Price                      float64    `json:"price"`
+	Size                       float64    `json:"size"`
+	ExecDate                   CustomTime `json:"exec_date"`
 	BuyChildOrderAcceptanceId  string     `json:"buy_child_order_acceptance_id"`
 	SellChildOrderAcceptanceId string     `json:"sell_child_order_acceptance_id"`
-	IsSync                     bool       `gorm:"default:false"`
-	CreatedAt                  time.Time  `gorm:"not null"`
-	UpdatedAt                  time.Time  `gorm:"not null"`
 }
 
 type CustomTime struct {

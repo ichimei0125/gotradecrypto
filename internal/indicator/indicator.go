@@ -2,7 +2,7 @@ package indicator
 
 import "github.com/ichimei0125/gotradecrypto/internal/exchange"
 
-func GetIndicators(data *[]exchange.KLine) {
+func GetIndicators(data *[]exchange.CandleStick) {
 	sma(data, 20)
 	ema(data, 20)
 	bbands(data, 20)
