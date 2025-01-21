@@ -8,11 +8,12 @@ import (
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 )
 
+type Bitflyer struct{}
+
 const baseURL = "https://api.bitflyer.com"
+const nameBitflyer = "bitflyer"
 
 var _symbols []string = []string{}
-
-type Bitflyer struct{}
 
 func (b *Bitflyer) GetInfo() exchange.ExchangeInfo {
 	if len(_symbols) <= 0 {
@@ -20,16 +21,16 @@ func (b *Bitflyer) GetInfo() exchange.ExchangeInfo {
 	}
 
 	return exchange.ExchangeInfo{
-		Name:       "bitflyer",
+		Name:       nameBitflyer,
 		IsDryRun:   true,
-		IsReattime: false,
+		IsRealtime: false,
 		Waittime:   time.Duration(1 * time.Minute),
 		Symbols:    _symbols,
 	}
 }
 
 func GetSymbols() []string {
-	_symbols = config.GetConfig().Symbols[new(Bitflyer).GetInfo().Name]
+	_symbols = config.GetConfig().Symbols[nameBitflyer]
 	return _symbols
 }
 

@@ -239,8 +239,8 @@ func (o sendchildorder) MarshalJSON() ([]byte, error) {
 
 // 売買最小単位
 // https://bitflyer.com/ja-jp/s/commission
-func (b *Bitflyer) GetTradeSizeLimit(symbol string) float64 {
-	var limitMap map[string]float64 = map[string]float64{
+func getTradeSizeLimit(symbol string) float64 {
+	limitMap := map[string]float64{
 		"BTC_JPY":    0.001,
 		"XRP_JPY":    0.1,
 		"ETH_JPY":    0.01,
@@ -259,14 +259,14 @@ func (b *Bitflyer) GetTradeSizeLimit(symbol string) float64 {
 
 func getTradePair(symbol string) (string, string) {
 	tradePairMap := map[string][]string{
-		"BTC_JPY":    []string{"BTC", "JPY"},
-		"XRP_JPY":    []string{"XRP", "JPY"},
-		"ETH_JPY":    []string{"ETH", "JPY"},
-		"XLM_JPY":    []string{"XLM", "JPY"},
-		"MONA_JPY":   []string{"MONA", "JPY"},
-		"ETH_BTC":    []string{"ETH", "BTC"},
-		"BCH_BTC":    []string{"BCH", "BTC"},
-		"FX_BTC_JPY": []string{"BTC", "JPY"},
+		"BTC_JPY":    {"BTC", "JPY"},
+		"XRP_JPY":    {"XRP", "JPY"},
+		"ETH_JPY":    {"ETH", "JPY"},
+		"XLM_JPY":    {"XLM", "JPY"},
+		"MONA_JPY":   {"MONA", "JPY"},
+		"ETH_BTC":    {"ETH", "BTC"},
+		"BCH_BTC":    {"BCH", "BTC"},
+		"FX_BTC_JPY": {"BTC", "JPY"},
 	}
 	tradePair, exist := tradePairMap[symbol]
 	if !exist {
@@ -277,7 +277,7 @@ func getTradePair(symbol string) (string, string) {
 }
 
 func (b *Bitflyer) BuyCypto(symbol string, size float64, price float64) {
-	limit := b.GetTradeSizeLimit(symbol)
+	limit := getTradeSizeLimit(symbol)
 
 	_, money := getTradePair(symbol)
 	_, avaiable := b.GetBalance(money)
@@ -299,7 +299,7 @@ func (b *Bitflyer) SellCypto(symbol string, size float64, price float64) {
 	comission := getTradingCommission(symbol)
 	_size := coin_available * (1 - comission)
 
-	_limit := b.GetTradeSizeLimit(symbol)
+	_limit := getTradeSizeLimit(symbol)
 	if _size < _limit {
 		// 資産不足
 		return
@@ -325,7 +325,7 @@ func (b *Bitflyer) SellAllCypto() {
 			continue
 		}
 		s := balance.CurrencyCode
-		if balance.Available <= b.GetTradeSizeLimit(s)*2 {
+		if balance.Available <= getTradeSizeLimit(s)*2 {
 			// 資産不足
 			continue
 		}

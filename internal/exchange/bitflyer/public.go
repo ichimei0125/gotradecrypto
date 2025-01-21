@@ -233,7 +233,7 @@ func bitflyerPublicAPICore(url string) (*http.Response, error) {
 			}
 			return resp, nil
 		}
-		logger.Info(new(Bitflyer), "", fmt.Sprintf("over HTTP limit, wait %d", waitTime))
+		logger.Info(new(Bitflyer), "", fmt.Sprintf("over HTTP limit, wait %d, url %s", waitTime, url))
 		time.Sleep(waitTime)
 	}
 }

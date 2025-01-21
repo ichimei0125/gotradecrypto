@@ -21,7 +21,6 @@ type Exchange interface {
 	GetBalance(b string) (float64, float64)                                   // amount, avaiable (資産総額,発注中以外の金額)
 	GetOrderNum(symbol string, status OrderStatus, minues int, side Side) int // number of special orderstatus
 	CancelAllOrder(symbol string)
-	GetTradeSizeLimit(symbol string) float64
 
 	CheckUnfinishedOrder(symbol string)
 }
@@ -30,7 +29,7 @@ type ExchangeInfo struct {
 	Name       string
 	Symbols    []string
 	IsDryRun   bool
-	IsReattime bool
+	IsRealtime bool
 	Waittime   time.Duration
 }
 
@@ -72,7 +71,8 @@ func (rl *RateLimiter) Allow() (bool, time.Duration) {
 	// reset
 	if now.After(rl.endTime) {
 		rl.endTime = now.Add(rl.interval)
-		rl.count = 0
+		rl.count = 1
+		return true, 0
 	}
 
 	// count (in limit)

@@ -13,6 +13,9 @@ import (
 	"github.com/ichimei0125/gotradecrypto/internal/logger"
 )
 
+// exchange to trading
+var exchanges = []exchange.Exchange{new(bitflyer.Bitflyer)}
+
 // catch app error
 func handlePanic() {
 	if r := recover(); r != nil {
@@ -21,34 +24,30 @@ func handlePanic() {
 	}
 }
 
+type trading struct {
+	exchange    exchange.Exchange
+	candlestick *[]exchange.CandleStick
+	symbol      string
+}
+
 func main() {
 	// defer handlePanic()
 
-	// bitflyer
-	var _bitflyer = new(bitflyer.Bitflyer)
-	// bitflyer xrpjpy
-	// var klineBitflyerXRPJPY *[]exchange.CandleStick = &[]exchange.CandleStick{}
-	// bitflyer fx_btc_jpy
-	var klineBitflyerFXBTCJPY *[]exchange.CandleStick = &[]exchange.CandleStick{}
-
-	trades := []struct {
-		exchange exchange.Exchange
-		kine     *[]exchange.CandleStick
-		symbol   string
-	}{
-		{_bitflyer, klineBitflyerFXBTCJPY, exchange.XRPJPY},
-		{_bitflyer, klineBitflyerFXBTCJPY, exchange.FX_BTCJPY},
-		{_bitflyer, klineBitflyerFXBTCJPY, exchange.BTCJPY},
-		{_bitflyer, klineBitflyerFXBTCJPY, exchange.ETHJPY},
-		{_bitflyer, klineBitflyerFXBTCJPY, exchange.XLMJPY},
-		{_bitflyer, klineBitflyerFXBTCJPY, exchange.MONAJPY},
-		{_bitflyer, klineBitflyerFXBTCJPY, exchange.ETHBTC},
-		{_bitflyer, klineBitflyerFXBTCJPY, exchange.BCHBTC},
+	tradings := []trading{}
+	for _, _exchagne := range exchanges {
+		for _, _symbol := range _exchagne.GetInfo().Symbols {
+			_trading := trading{
+				exchange:    _exchagne,
+				candlestick: &[]exchange.CandleStick{},
+				symbol:      _symbol,
+			}
+			tradings = append(tradings, _trading)
+		}
 	}
 
 	// init log
 	logger.InitLogger(nil, "", 10, 5, 30, true)
-	for _, t := range trades {
+	for _, t := range tradings {
 		logger.InitLogger(t.exchange, t.symbol, 10, 5, 30, true)
 		logger.Print(t.exchange, t.symbol, "Time, PriceNow, Open, Close, High, Low, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, RSI, BUY, SELL")
 	}
@@ -61,9 +60,9 @@ func main() {
 
 	wg := new(sync.WaitGroup)
 	for {
-		wg.Add(len(trades))
+		wg.Add(len(tradings))
 
-		for _, t := range trades {
+		for _, t := range tradings {
 			localT := t // 闭包变量捕获问题
 			go func(wg *sync.WaitGroup) {
 				// defer handlePanic()
@@ -71,7 +70,7 @@ func main() {
 
 				since := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
 				test := bitflyer.FetchTrades(since, string(localT.symbol))
-				fmt.Println(test[0].ExecutionTime)
+				fmt.Println(localT.symbol, test[0].ExecutionTime)
 				// localT.exchange.FetchCandleSticks(localT.symbol, localT.kine)
 				// indicator.GetIndicators(localT.kine)
 
