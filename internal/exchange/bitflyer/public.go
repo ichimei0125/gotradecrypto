@@ -26,7 +26,7 @@ var (
 	cache_trades sync.Map
 )
 
-func (b *Bitflyer) FetchCandleSticks(s exchange.Symbol, cache *[]exchange.CandleStick) {
+func (b *Bitflyer) FetchCandleSticks(s string, cache *[]exchange.CandleStick) {
 	// 	var oldest_id int64 = 0
 	// 	var lastest_id int64 = 0
 	// 	uniqueName := common.GetUniqueName(new(Bitflyer).Name(), string(s))
@@ -165,7 +165,7 @@ func FetchTrades(since time.Time, symbol string) []exchange.Trade {
 	} else {
 		// load from db if not cached
 		var err error
-		trades, err = db.GetDBTradeAfter(since, new(Bitflyer).Name(), string(symbol))
+		trades, err = db.GetDBTradeAfter(since, new(Bitflyer).GetInfo().Name, string(symbol))
 		// get max history data for first time
 		if err != nil {
 			since = common.GetNow().Add(-30 * 24 * time.Hour).UTC()
@@ -217,13 +217,13 @@ func FetchTrades(since time.Time, symbol string) []exchange.Trade {
 	cache_trades.Store(symbol, trades)
 	// insert db
 	// TODO: reduce insert frequency
-	db.BulkInsertDBTrade(newTrades, new(Bitflyer).Name(), symbol)
+	db.BulkInsertDBTrade(newTrades, new(Bitflyer).GetInfo().Name, symbol)
 
 	return trades
 }
 
 func bitflyerPublicAPICore(url string) (*http.Response, error) {
-	rl := exchange.GetRateLimiter(new(Bitflyer).Name()+"_Public", 5*time.Minute, (500 - 20))
+	rl := exchange.GetRateLimiter(new(Bitflyer).GetInfo().Name+"_Public", 5*time.Minute, (500 - 20))
 	for {
 		ok, waitTime := rl.Allow()
 		if ok {
@@ -328,25 +328,6 @@ func convertExetutionsToKLine(executions []Execution, minute_unit int) []exchang
 		}
 	}
 	return kline
-}
-
-func getProductCode(symbol exchange.Symbol) string {
-	productCodeMap := map[exchange.Symbol]string{
-		exchange.BTCJPY:  "BTC_JPY",
-		exchange.XRPJPY:  "XRP_JPY",
-		exchange.ETHJPY:  "ETH_JPY",
-		exchange.XLMJPY:  "XLM_JPY",
-		exchange.MONAJPY: "MONA_JPY",
-		// exchange.ETHBTC:    "ETH_BTC",
-		// exchange.BCHBTC:    "BCH_BTC",
-		exchange.FX_BTCJPY: "FX_BTC_JPY",
-	}
-
-	res, exist := productCodeMap[symbol]
-	if !exist {
-		panic(fmt.Sprintf("bitflyer err symbol %s", symbol))
-	}
-	return res
 }
 
 func convertExecutionsToTrades(exections *[]Execution) []exchange.Trade {

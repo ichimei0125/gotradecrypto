@@ -16,10 +16,11 @@ type Config struct {
 	Trade struct {
 		InvestMoney int `yaml:"invest_money"`
 		CutLoss     int `yaml:"cut_loss"`
-		SafeMoney   int `yaml:"save_money"`
+		SafeMoney   int `yaml:"safe_money"`
 	} `yaml:"trade"`
-	DryRun           map[string]map[string]bool `yaml:"dry_run"`
-	ConnectionString string                     `yaml:"connection_string"`
+	Symbols          map[string][]string `yaml:"symbols"`
+	DryRun           map[string][]string `yaml:"dry_run"`
+	ConnectionString string              `yaml:"connection_string"`
 }
 
 func GetConfig() Config {

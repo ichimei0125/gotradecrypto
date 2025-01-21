@@ -13,17 +13,17 @@ type TradeStatus int
 const (
 	BUY TradeStatus = iota
 	SELL
-	DoNothing
+	HOLD
 )
 
-func Trade(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.CandleStick) {
+func Trade(e exchange.Exchange, symbol string, data *[]exchange.CandleStick) {
 	e.CheckUnfinishedOrder(symbol)
 
 	d := *data
 
 	var output_buy, output_sell int = 0, 0
 
-	if !symbol.IsDryRun(e.Name()) && losscut(e, symbol) {
+	if !e.GetInfo().IsDryRun && losscut(e, symbol) {
 		output_buy, output_sell = -1, -1
 		return
 	}
@@ -33,15 +33,15 @@ func Trade(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.CandleS
 	switch status {
 	case BUY:
 		output_buy, output_sell = 1, 0
-		if !symbol.IsDryRun(e.Name()) {
+		if !e.GetInfo().IsDryRun {
 			buy(e, symbol, data)
 		}
 	case SELL:
 		output_buy, output_sell = 0, 1
-		if !symbol.IsDryRun(e.Name()) {
+		if !e.GetInfo().IsDryRun {
 			sell(e, symbol, data)
 		}
-	case DoNothing:
+	case HOLD:
 		output_buy, output_sell = 0, 0
 	}
 

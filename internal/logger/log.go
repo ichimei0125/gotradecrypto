@@ -19,16 +19,16 @@ var (
 	mutex   sync.Mutex
 )
 
-func getFileName(e exchange.Exchange, s exchange.Symbol) string {
+func getFileName(e exchange.Exchange, s string) string {
 	filename := "app.log"
 	if e != nil && s != "" {
-		filename = common.GetUniqueName(e.Name(), string(s)) + ".log"
+		filename = common.GetUniqueName(e.GetInfo().Name, string(s)) + ".log"
 	}
 	return filename
 }
 
 // InitLogger
-func InitLogger(e exchange.Exchange, symbol exchange.Symbol, maxSize, maxBackups, maxAge int, compress bool) {
+func InitLogger(e exchange.Exchange, symbol string, maxSize, maxBackups, maxAge int, compress bool) {
 	filename := getFileName(e, symbol)
 	log_folder := config.GetEnvVar(common.ENV_LOG_PATH[0], common.ENV_LOG_PATH[1])
 	path := path.Join(log_folder, filename)
@@ -72,19 +72,19 @@ func getDir(filePath string) string {
 	return filepath.Dir(filePath)
 }
 
-func getLogger(e exchange.Exchange, s exchange.Symbol) *log.Logger {
+func getLogger(e exchange.Exchange, s string) *log.Logger {
 	filename := getFileName(e, s)
 	mutex.Lock()
 	defer mutex.Unlock()
 	logger, exists := loggers[filename]
 	if !exists {
-		log.Printf("Logger not initialized for Exchange: %s, Symbol: %s. Please call InitLogger first.", e.Name(), string(s))
+		log.Printf("Logger not initialized for Exchange: %s, Symbol: %s. Please call InitLogger first.", e.GetInfo().Name, string(s))
 	}
 	return logger
 }
 
 // Info 记录信息级别日志
-func Info(e exchange.Exchange, s exchange.Symbol, v ...interface{}) {
+func Info(e exchange.Exchange, s string, v ...interface{}) {
 	logger := getLogger(e, s)
 	if logger == nil {
 		return
@@ -96,10 +96,10 @@ func Info(e exchange.Exchange, s exchange.Symbol, v ...interface{}) {
 // Error 记录错误级别日志
 func Error(v ...interface{}) {
 	var e exchange.Exchange = nil
-	var s exchange.Symbol = ""
+	var s string = ""
 
 	if len(v) >= 3 {
-		e, s = v[0].(exchange.Exchange), v[1].(exchange.Symbol)
+		e, s = v[0].(exchange.Exchange), v[1].(string)
 		v = v[2:]
 	}
 
@@ -112,7 +112,7 @@ func Error(v ...interface{}) {
 }
 
 // Debug 记录调试级别日志
-func Debug(e exchange.Exchange, s exchange.Symbol, v ...interface{}) {
+func Debug(e exchange.Exchange, s string, v ...interface{}) {
 	logger := getLogger(e, s)
 	if logger == nil {
 		return
@@ -121,7 +121,7 @@ func Debug(e exchange.Exchange, s exchange.Symbol, v ...interface{}) {
 	logger.Println(v...)
 }
 
-func Print(e exchange.Exchange, s exchange.Symbol, v ...interface{}) {
+func Print(e exchange.Exchange, s string, v ...interface{}) {
 	logger := getLogger(e, s)
 	if logger == nil {
 		return

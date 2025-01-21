@@ -9,11 +9,11 @@ import (
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 )
 
-func insertOrder(acceptID string, symbol exchange.Symbol, side exchange.Side, size float64) {
+func insertOrder(acceptID string, symbol string, side exchange.Side, size float64) {
 
 	record := db.OrderHistory{
 		ID:       acceptID,
-		Exchange: new(Bitflyer).Name(),
+		Exchange: new(Bitflyer).GetInfo().Name,
 		Symbol:   string(symbol),
 		Side:     string(side),
 		Size:     size,
@@ -23,7 +23,7 @@ func insertOrder(acceptID string, symbol exchange.Symbol, side exchange.Side, si
 	db.Insert(&record)
 }
 
-func (b *Bitflyer) CheckUnfinishedOrder(symbol exchange.Symbol) {
+func (b *Bitflyer) CheckUnfinishedOrder(symbol string) {
 	oh_list := db.GetAllRecords()
 	if len(oh_list) <= 0 {
 		return
@@ -36,7 +36,7 @@ func (b *Bitflyer) CheckUnfinishedOrder(symbol exchange.Symbol) {
 			continue
 		}
 
-		child_order := getChildOrderByID(getProductCode(symbol), oh.ID)
+		child_order := getChildOrderByID(symbol, oh.ID)
 		if len(child_order) > 1 {
 			msg := ""
 			for _, o := range child_order {

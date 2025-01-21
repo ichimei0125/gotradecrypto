@@ -8,9 +8,16 @@ trade:
   cut_loss: 57000
   safe_money: 40000
 
-dry_run:
+symbols:
   bitflyer:
-    XRP_JPY: true
-    FX_BTC_JPY: true
+    - BTC_JPY
+    - XRP_JPY
+    - ETH_JPY
+    - XLM_JPY
+    - MONA_JPY
+    - ELF_JPY
+    # - ETH_BTC
+    # - BCH_BTC 
+    - FX_BTC_JPY
 
 connection_string: tradebot:{password}@tcp(127.0.0.1:3306)/tradedb?charset=utf8mb4&parseTime=True&loc=UTC

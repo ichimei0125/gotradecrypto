@@ -27,17 +27,23 @@ func main() {
 	// bitflyer
 	var _bitflyer = new(bitflyer.Bitflyer)
 	// bitflyer xrpjpy
-	var klineBitflyerXRPJPY *[]exchange.CandleStick = &[]exchange.CandleStick{}
+	// var klineBitflyerXRPJPY *[]exchange.CandleStick = &[]exchange.CandleStick{}
 	// bitflyer fx_btc_jpy
-	// var klineBitflyerFXBTCJPY *[]exchange.KLine = &[]exchange.KLine{}
+	var klineBitflyerFXBTCJPY *[]exchange.CandleStick = &[]exchange.CandleStick{}
 
 	trades := []struct {
 		exchange exchange.Exchange
 		kine     *[]exchange.CandleStick
-		symbol   exchange.Symbol
+		symbol   string
 	}{
-		{_bitflyer, klineBitflyerXRPJPY, exchange.XRPJPY},
-		// {_bitflyer, klineBitflyerFXBTCJPY, exchange.FX_BTCJPY},
+		{_bitflyer, klineBitflyerFXBTCJPY, exchange.XRPJPY},
+		{_bitflyer, klineBitflyerFXBTCJPY, exchange.FX_BTCJPY},
+		{_bitflyer, klineBitflyerFXBTCJPY, exchange.BTCJPY},
+		{_bitflyer, klineBitflyerFXBTCJPY, exchange.ETHJPY},
+		{_bitflyer, klineBitflyerFXBTCJPY, exchange.XLMJPY},
+		{_bitflyer, klineBitflyerFXBTCJPY, exchange.MONAJPY},
+		{_bitflyer, klineBitflyerFXBTCJPY, exchange.ETHBTC},
+		{_bitflyer, klineBitflyerFXBTCJPY, exchange.BCHBTC},
 	}
 
 	// init log

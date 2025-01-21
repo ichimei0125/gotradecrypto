@@ -2,17 +2,35 @@ package bitflyer
 
 import (
 	"bytes"
-	"database/sql/driver"
-	"fmt"
 	"time"
+
+	"github.com/ichimei0125/gotradecrypto/internal/config"
+	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 )
 
 const baseURL = "https://api.bitflyer.com"
 
+var _symbols []string = []string{}
+
 type Bitflyer struct{}
 
-func (b *Bitflyer) Name() string {
-	return "bitflyer"
+func (b *Bitflyer) GetInfo() exchange.ExchangeInfo {
+	if len(_symbols) <= 0 {
+		GetSymbols()
+	}
+
+	return exchange.ExchangeInfo{
+		Name:       "bitflyer",
+		IsDryRun:   true,
+		IsReattime: false,
+		Waittime:   time.Duration(1 * time.Minute),
+		Symbols:    _symbols,
+	}
+}
+
+func GetSymbols() []string {
+	_symbols = config.GetConfig().Symbols[new(Bitflyer).GetInfo().Name]
+	return _symbols
 }
 
 type Execution struct {
@@ -53,44 +71,4 @@ func (ct *CustomTime) UnmarshalJSON(b []byte) error {
 		parseErr = err
 	}
 	return parseErr
-}
-
-// for gorm Value interface
-func (ct CustomTime) Value() (driver.Value, error) {
-	return ct.Time.Format(TimeLayout), nil
-}
-func (ct *CustomTime) Scan(value interface{}) error {
-	switch v := value.(type) {
-	case time.Time:
-		ct.Time = v
-		return nil
-	case string:
-		t, err := time.Parse(TimeLayout, v)
-		if err != nil {
-			return fmt.Errorf("invalid time string: %v", err)
-		}
-		ct.Time = t
-		return nil
-	case []byte:
-		t, err := time.Parse(TimeLayout, string(v))
-		if err != nil {
-			return fmt.Errorf("invalid time byte array: %v", err)
-		}
-		ct.Time = t
-		return nil
-	default:
-		return fmt.Errorf("unsupported type: %T", value)
-	}
-}
-
-func CustomTimeToString(t CustomTime) string {
-	str := t.Time.Format(TimeLayout)
-	return str
-}
-
-func StringToCustomTime(s string) CustomTime {
-	t, _ := time.Parse(TimeLayout, s)
-	return CustomTime{
-		Time: t,
-	}
 }

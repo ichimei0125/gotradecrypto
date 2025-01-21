@@ -20,7 +20,7 @@ import (
 
 func bitFlyerPrivateAPICore(path string, method string, body []byte, is_log ...bool) []byte {
 
-	key, secret := exchange.GetSecret(new(Bitflyer).Name())
+	key, secret := exchange.GetSecret(new(Bitflyer).GetInfo().Name)
 
 	timestamp := fmt.Sprintf("%d", time.Now().UnixNano()/int64(time.Millisecond))
 
@@ -66,14 +66,14 @@ type balance struct {
 	Available    float64 `json:"available"`
 }
 
-func (b *Bitflyer) GetBalance(ba exchange.Balance) (float64, float64) {
+func (b *Bitflyer) GetBalance(ba string) (float64, float64) {
 	balances, err := getbalance()
 	if err != nil {
 		log.Println("Error:", err)
 		return -1.0, -1.0
 	}
 
-	baVal := getbalancevalue(ba)
+	baVal := ba
 	for _, d := range balances {
 		if d.CurrencyCode == baVal {
 			return d.Amount, d.Available
@@ -93,27 +93,9 @@ func getbalance() ([]balance, error) {
 	return balances, err
 }
 
-func getbalancevalue(b exchange.Balance) string {
-	balanceMap := map[exchange.Balance]string{
-		exchange.JPY:  "JPY",
-		exchange.BTC:  "BTC",
-		exchange.ETH:  "ETH",
-		exchange.XRP:  "XRP",
-		exchange.BCH:  "BCH",
-		exchange.MONA: "MONA",
-		// TODO FX
-	}
-
-	if bStr, exists := balanceMap[b]; exists {
-		return bStr
-	}
-
-	panic(fmt.Sprintf("bitflyer no balance: %s", b))
-}
-
-func (b *Bitflyer) GetOrderNum(symbol exchange.Symbol, status exchange.OrderStatus, minues int, side exchange.Side) int {
+func (b *Bitflyer) GetOrderNum(symbol string, status exchange.OrderStatus, minues int, side exchange.Side) int {
 	cnt := 0
-	childorders := getChildOrders(getProductCode(symbol), getOrderStatus(status))
+	childorders := getChildOrders(symbol, getOrderStatus(status))
 
 	time_after := common.GetUTCNow().Add(time.Duration(-minues) * time.Minute)
 
@@ -205,11 +187,11 @@ func getChildOrderByID(product_code string, child_order_acceptance_id string) []
 	return childorders
 }
 
-func (b *Bitflyer) CancelAllOrder(symbol exchange.Symbol) {
+func (b *Bitflyer) CancelAllOrder(symbol string) {
 	path := "/v1/me/cancelallchildorders"
 	body := fmt.Sprintf(`{
 		"product_code": "%s"
-	}`, getProductCode(symbol))
+	}`, symbol)
 	bitFlyerPrivateAPICore(path, "POST", []byte(body))
 }
 
@@ -257,16 +239,16 @@ func (o sendchildorder) MarshalJSON() ([]byte, error) {
 
 // 売買最小単位
 // https://bitflyer.com/ja-jp/s/commission
-func (b *Bitflyer) GetTradeSizeLimit(symbol exchange.Symbol) float64 {
-	var limitMap map[exchange.Symbol]float64 = map[exchange.Symbol]float64{
-		exchange.BTCJPY:  0.001,
-		exchange.XRPJPY:  0.1,
-		exchange.ETHJPY:  0.01,
-		exchange.XLMJPY:  0.1,
-		exchange.MONAJPY: 0.1,
-		// exchange.ETHBTC:    0.01,
-		// exchange.BCHBTC:    0.01,
-		exchange.FX_BTCJPY: 0.001,
+func (b *Bitflyer) GetTradeSizeLimit(symbol string) float64 {
+	var limitMap map[string]float64 = map[string]float64{
+		"BTC_JPY":    0.001,
+		"XRP_JPY":    0.1,
+		"ETH_JPY":    0.01,
+		"XLM_JPY":    0.1,
+		"MONA_JPY":   0.1,
+		"ETH_BTC":    0.01,
+		"BCH_BTC":    0.01,
+		"FX_BTC_JPY": 0.001,
 	}
 	limit, exist := limitMap[symbol]
 	if !exist {
@@ -275,10 +257,29 @@ func (b *Bitflyer) GetTradeSizeLimit(symbol exchange.Symbol) float64 {
 	return limit
 }
 
-func (b *Bitflyer) BuyCypto(symbol exchange.Symbol, size float64, price float64) {
+func getTradePair(symbol string) (string, string) {
+	tradePairMap := map[string][]string{
+		"BTC_JPY":    []string{"BTC", "JPY"},
+		"XRP_JPY":    []string{"XRP", "JPY"},
+		"ETH_JPY":    []string{"ETH", "JPY"},
+		"XLM_JPY":    []string{"XLM", "JPY"},
+		"MONA_JPY":   []string{"MONA", "JPY"},
+		"ETH_BTC":    []string{"ETH", "BTC"},
+		"BCH_BTC":    []string{"BCH", "BTC"},
+		"FX_BTC_JPY": []string{"BTC", "JPY"},
+	}
+	tradePair, exist := tradePairMap[symbol]
+	if !exist {
+		panic(fmt.Sprintf("bitflyer not support symbol: %s", symbol))
+	}
+	return tradePair[0], tradePair[1]
+
+}
+
+func (b *Bitflyer) BuyCypto(symbol string, size float64, price float64) {
 	limit := b.GetTradeSizeLimit(symbol)
 
-	_, money := symbol.GetTradePair()
+	_, money := getTradePair(symbol)
 	_, avaiable := b.GetBalance(money)
 	c := config.GetConfig()
 
@@ -290,12 +291,12 @@ func (b *Bitflyer) BuyCypto(symbol exchange.Symbol, size float64, price float64)
 
 }
 
-func (b *Bitflyer) SellCypto(symbol exchange.Symbol, size float64, price float64) {
+func (b *Bitflyer) SellCypto(symbol string, size float64, price float64) {
 	// TOOD 考虑size的策略
-	coin, _ := symbol.GetTradePair()
+	coin, _ := getTradePair(symbol)
 	_, coin_available := b.GetBalance(coin)
 
-	comission := getTradingCommission(getProductCode(symbol))
+	comission := getTradingCommission(symbol)
 	_size := coin_available * (1 - comission)
 
 	_limit := b.GetTradeSizeLimit(symbol)
@@ -320,19 +321,16 @@ func (b *Bitflyer) SellAllCypto() {
 	}
 
 	for _, balance := range balances {
-		if balance.CurrencyCode == exchange.JPY {
+		if balance.CurrencyCode == "JPY" {
 			continue
 		}
-		s, exist := getSymbolByBalance(balance.CurrencyCode)
-		if !exist {
-			continue
-		}
+		s := balance.CurrencyCode
 		if balance.Available <= b.GetTradeSizeLimit(s)*2 {
 			// 資産不足
 			continue
 		}
 
-		size := balance.Available * (1 - getTradingCommission(getProductCode(s)))
+		size := balance.Available * (1 - getTradingCommission(s))
 
 		sendChildOrder(s, size, 0, "SELL", "MARKET")
 	}
@@ -356,27 +354,13 @@ func getTradingCommission(product_code string) float64 {
 	return _comission.ComissionRate
 }
 
-func getSymbolByBalance(balance string) (exchange.Symbol, bool) {
-	var symbolMap map[string]exchange.Symbol = map[string]exchange.Symbol{
-		"BTC":  exchange.BTCJPY,
-		"XRP":  exchange.XRPJPY,
-		"ETH":  exchange.ETHJPY,
-		"MONA": exchange.MONAJPY,
-		"XLM":  exchange.XLMJPY,
-		// TODO BCH FX
-	}
-
-	val, exist := symbolMap[balance]
-	return val, exist
-}
-
-func sendChildOrder(symbol exchange.Symbol, size float64, price float64, side string, ordertype string) childOrderAcceptanceID {
+func sendChildOrder(symbol string, size float64, price float64, side string, ordertype string) childOrderAcceptanceID {
 	if size <= 0.0 {
 		return childOrderAcceptanceID{}
 	}
 
 	order := sendchildorder{
-		ProductCode:    getProductCode(symbol),
+		ProductCode:    symbol,
 		ChildOrderType: ordertype,
 		Side:           side,
 		Price:          price,

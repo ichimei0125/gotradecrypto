@@ -6,7 +6,7 @@ import (
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 )
 
-func buy(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.CandleStick) {
+func buy(e exchange.Exchange, symbol string, data *[]exchange.CandleStick) {
 	d := *data
 	price := d[0].Close
 
@@ -20,7 +20,7 @@ func buy(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.CandleSti
 	}
 }
 
-func sell(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.CandleStick) {
+func sell(e exchange.Exchange, symbol string, data *[]exchange.CandleStick) {
 	d := *data
 	price := d[0].Close
 
@@ -34,19 +34,21 @@ func sell(e exchange.Exchange, symbol exchange.Symbol, data *[]exchange.CandleSt
 	}
 }
 
-func losscut(e exchange.Exchange, symbol exchange.Symbol) bool {
-	coin, money := symbol.GetTradePair()
-
-	// TODO 多币种支持
-
-	money_amount, _ := e.GetBalance(money)
-	coin_amount, _ := e.GetBalance(coin)
-	size_limit := e.GetTradeSizeLimit(symbol)
-
-	c := config.GetConfig()
-	if money_amount <= float64(c.Trade.CutLoss) && coin_amount < size_limit*2 {
-		e.SellAllCypto()
-		return true
-	}
+func losscut(e exchange.Exchange, symbol string) bool {
+	// TODO
 	return false
+	// coin, money := symbol.GetTradePair()
+
+	// // TODO 多币种支持
+
+	// money_amount, _ := e.GetBalance(money)
+	// coin_amount, _ := e.GetBalance(coin)
+	// size_limit := e.GetTradeSizeLimit(symbol)
+
+	// c := config.GetConfig()
+	// if money_amount <= float64(c.Trade.CutLoss) && coin_amount < size_limit*2 {
+	// 	e.SellAllCypto()
+	// 	return true
+	// }
+	// return false
 }

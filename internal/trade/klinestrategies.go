@@ -39,5 +39,5 @@ func tradestrategy(data *[]exchange.CandleStick) TradeStatus {
 		}
 	}
 
-	return DoNothing
+	return HOLD
 }
