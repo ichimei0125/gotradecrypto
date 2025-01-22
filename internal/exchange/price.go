@@ -1,7 +1,11 @@
 package exchange
 
 import (
+	"fmt"
+	"slices"
 	"time"
+
+	"github.com/ichimei0125/gotradecrypto/internal/common"
 )
 
 type CandleStick struct {
@@ -47,4 +51,51 @@ func GetClose(KLine []CandleStick) []float64 {
 		res[i] = k.Close
 	}
 	return res
+}
+
+// trades: sorted new -> old
+func TradesToCandleStickByMinute(trades []Trade, minutes int) []CandleStick {
+	if !(minutes > 0 && minutes < 60) {
+		panic(fmt.Sprintf("minutes must in 1~59, minutes: %d", minutes))
+	}
+
+	lastest_time := trades[0].ExecutionTime
+	norm_minute := int(lastest_time.Minute()/minutes) * minutes
+	start_time := time.Date(lastest_time.Year(), lastest_time.Month(), lastest_time.Day(), lastest_time.Hour(), norm_minute, 0, 0, lastest_time.Location())
+
+	return convertTradesToCandleStick(trades, start_time, time.Duration(minutes*int(time.Minute)))
+
+}
+
+// trades: sorted new -> old
+func convertTradesToCandleStick(trades []Trade, start_time time.Time, duration time.Duration) []CandleStick {
+	candlesticks := []CandleStick{}
+
+	prices := []float64{}
+	vol := 0.0
+	for _, trade := range trades {
+		if trade.ExecutionTime.After(start_time) {
+			prices = append(prices, trade.Price)
+			vol += trade.Size
+		} else {
+			// it is possible no trading
+			if len(prices) > 0 {
+				// append to candlestick
+				candlesticks = append(candlesticks, CandleStick{
+					Open:     prices[len(prices)-1],
+					Close:    prices[0],
+					High:     slices.Max(prices),
+					Low:      slices.Min(prices),
+					Volume:   common.Round(vol, 3),
+					OpenTime: start_time,
+				})
+			}
+			// reset tmp vals
+			prices = []float64{}
+			vol = 0.0
+			start_time = start_time.Add(-duration)
+		}
+	}
+
+	return candlesticks
 }

@@ -25,9 +25,8 @@ func handlePanic() {
 }
 
 type trading struct {
-	exchange    exchange.Exchange
-	candlestick *[]exchange.CandleStick
-	symbol      string
+	exchange exchange.Exchange
+	symbol   string
 }
 
 func main() {
@@ -37,9 +36,8 @@ func main() {
 	for _, _exchagne := range exchanges {
 		for _, _symbol := range _exchagne.GetInfo().Symbols {
 			_trading := trading{
-				exchange:    _exchagne,
-				candlestick: &[]exchange.CandleStick{},
-				symbol:      _symbol,
+				exchange: _exchagne,
+				symbol:   _symbol,
 			}
 			tradings = append(tradings, _trading)
 		}
@@ -68,9 +66,9 @@ func main() {
 				// defer handlePanic()
 				defer wg.Done()
 
-				since := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
-				test := bitflyer.FetchTrades(since, string(localT.symbol))
-				fmt.Println(localT.symbol, test[0].ExecutionTime)
+				since := time.Date(2025, 1, 20, 0, 0, 0, 0, time.UTC)
+				test := localT.exchange.FetchCandleSticks(since, string(localT.symbol), time.Duration(3*time.Minute))
+				fmt.Println(localT.symbol, test[1].OpenTime, test[1].Open, test[1].High, test[1].Low, test[1].Close, test[1].Volume)
 				// localT.exchange.FetchCandleSticks(localT.symbol, localT.kine)
 				// indicator.GetIndicators(localT.kine)
 

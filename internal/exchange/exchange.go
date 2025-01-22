@@ -12,7 +12,8 @@ import (
 type Exchange interface {
 	GetInfo() ExchangeInfo
 	// Public
-	FetchCandleSticks(symbol string, cache *[]CandleStick)
+	FetchTrades(since time.Time, symbol string) []Trade
+	FetchCandleSticks(since time.Time, symbol string, interval time.Duration) []CandleStick
 	// Private
 	BuyCypto(symbol string, size float64, price float64)
 	SellCypto(symbol string, size float64, price float64)
