@@ -60,7 +60,7 @@ func (b *Bitflyer) FetchTrades(since time.Time, symbol string) []exchange.Trade 
 		}
 	}
 	// to trades
-	newTrades := convertExecutionsToTrades(&executions)
+	newTrades := convertExecutionsToTrades(executions)
 	// sort trades ASC, old -> new
 	slices.SortFunc(newTrades, func(a, b exchange.Trade) int {
 		if a.ExecutionTime.Before(b.ExecutionTime) {
@@ -80,7 +80,7 @@ func (b *Bitflyer) FetchTrades(since time.Time, symbol string) []exchange.Trade 
 	// rm duplicated trades
 	_newTrades := []exchange.Trade{}
 	for i := len(newTrades) - 1; i >= 0; i-- {
-		if newTrades[i].ExecutionTime.Before(trades[0].ExecutionTime) {
+		if newTrades[i].ExecutionTime.After(since) {
 			_newTrades = append(_newTrades, newTrades[i])
 		}
 	}
@@ -153,23 +153,16 @@ func FetchExecution(symbol string, count int, before_id int64, after_id int64) [
 	return executions
 }
 
-// type byExecDate []Execution
-
-// func (a byExecDate) Len() int           { return len(a) }
-// func (a byExecDate) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-// func (a byExecDate) Less(i, j int) bool { return a[i].ExecDate.Time.Before(a[j].ExecDate.Time) }
-
-func convertExecutionsToTrades(exections *[]Execution) []exchange.Trade {
-	data := *exections
-	res := []exchange.Trade{}
-	for _, execution := range data {
-		res = append(res, exchange.Trade{
+func convertExecutionsToTrades(exections []Execution) []exchange.Trade {
+	res := make([]exchange.Trade, len(exections))
+	for i, execution := range exections {
+		res[i] = exchange.Trade{
 			ID:            fmt.Sprintf("%d", execution.ID),
 			Side:          execution.Side,
 			Price:         execution.Price,
 			Size:          execution.Size,
 			ExecutionTime: execution.ExecDate.Time,
-		})
+		}
 	}
 	return res
 }
