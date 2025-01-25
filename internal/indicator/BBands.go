@@ -8,7 +8,7 @@ func bbands(data *[]exchange.CandleStick, period int) {
 		if d[i].SMA == 0.0 {
 			continue
 		}
-		closes := exchange.GetClose(d[i : i+period])
+		closes := exchange.GetPrice(d[i:i+period], "close")
 		d[i].BBands_Plus_2K = d[i].SMA + 2*standardDeviation(closes)
 		d[i].BBands_Plus_3K = d[i].SMA + 3*standardDeviation(closes)
 

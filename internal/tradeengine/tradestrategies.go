@@ -1,4 +1,4 @@
-package trade
+package tradeengine
 
 import (
 	"github.com/ichimei0125/gotradecrypto/internal/common"
@@ -6,9 +6,8 @@ import (
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 )
 
-func buy(e exchange.Exchange, symbol string, data *[]exchange.CandleStick) {
-	d := *data
-	price := d[0].Close
+func buy(e exchange.Exchange, symbol string, data []exchange.CandleStick) {
+	price := data[0].Close
 
 	c := config.GetConfig()
 	_invest := c.Trade.InvestMoney
@@ -20,9 +19,8 @@ func buy(e exchange.Exchange, symbol string, data *[]exchange.CandleStick) {
 	}
 }
 
-func sell(e exchange.Exchange, symbol string, data *[]exchange.CandleStick) {
-	d := *data
-	price := d[0].Close
+func sell(e exchange.Exchange, symbol string, data []exchange.CandleStick) {
+	price := data[0].Close
 
 	c := config.GetConfig()
 	_invest := c.Trade.InvestMoney

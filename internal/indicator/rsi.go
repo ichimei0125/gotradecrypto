@@ -31,7 +31,7 @@ func rsi(data *[]exchange.CandleStick, period int) {
 	// 	d[i].RSI = emaU[i] / (emaU[i] + emaD[i]) * 100
 	// }
 
-	closes := exchange.GetClose(d)
+	closes := exchange.GetPrice(d, "close")
 	rsi := calculateRSI(closes, period)
 	for i := 0; i < len(d)-period; i++ {
 		d[i].RSI = rsi[i]

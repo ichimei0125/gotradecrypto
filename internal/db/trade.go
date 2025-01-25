@@ -60,7 +60,7 @@ func BulkInsertDBTrade(trades []exchange.Trade, exchangeName, symbol string) {
 func GetDBTradeAfter(t time.Time, exchangeName, symbol string) ([]exchange.Trade, error) {
 	var res []exchange.Trade
 	tableName := getDBTradeTableName(exchangeName, symbol)
-	err := _db.Table(tableName).Where("execution_time >= ?", t).Order("execution_time DESC").Find(&res).Error
+	err := _db.Table(tableName).Where("execution_time >= ?", t).Order("execution_time ASC").Find(&res).Error
 	return res, err
 }
 

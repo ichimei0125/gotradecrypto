@@ -11,10 +11,16 @@ import (
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 	"github.com/ichimei0125/gotradecrypto/internal/exchange/bitflyer"
 	"github.com/ichimei0125/gotradecrypto/internal/logger"
+	"github.com/ichimei0125/gotradecrypto/internal/simulator"
+	"github.com/spf13/cobra"
 )
 
 // exchange to trading
 var exchanges = []exchange.Exchange{new(bitflyer.Bitflyer)}
+
+var (
+	param_simulate_startdata time.Time
+)
 
 // catch app error
 func handlePanic() {
@@ -29,7 +35,7 @@ type trading struct {
 	symbol   string
 }
 
-func main() {
+func tradebot(mode string) {
 	// defer handlePanic()
 
 	tradings := []trading{}
@@ -66,21 +72,74 @@ func main() {
 				// defer handlePanic()
 				defer wg.Done()
 
-				since := time.Date(2025, 1, 20, 0, 0, 0, 0, time.UTC)
-				test := localT.exchange.FetchCandleSticks(since, string(localT.symbol), time.Duration(3*time.Minute))
-				fmt.Println(localT.symbol, test[1].OpenTime, test[1].Open, test[1].High, test[1].Low, test[1].Close, test[1].Volume)
-				// localT.exchange.FetchCandleSticks(localT.symbol, localT.kine)
-				// indicator.GetIndicators(localT.kine)
+				if mode == "trade" {
+					since := time.Date(2025, 1, 20, 0, 0, 0, 0, time.UTC)
+					test := localT.exchange.FetchCandleSticks(since, string(localT.symbol), time.Duration(3*time.Minute))
+					fmt.Println(localT.symbol, test[1].OpenTime, test[1].Open, test[1].High, test[1].Low, test[1].Close, test[1].Volume)
+					// localT.exchange.FetchCandleSticks(localT.symbol, localT.kine)
+					// indicator.GetIndicators(localT.kine)
 
-				// go func() {
-				// 	// defer handlePanic()
-				// 	trade.Trade(localT.exchange, localT.symbol, localT.kine)
-				// }()
+					// go func() {
+					// 	// defer handlePanic()
+					// 	trade.Trade(localT.exchange, localT.symbol, localT.kine)
+					// }()
+				} else if mode == "simulate" {
+					simulator.Simulator(localT.exchange, localT.symbol, param_simulate_startdata)
+				} else if mode == "updatedata" {
+					localT.exchange.FetchTrades(common.NULLDATE, localT.symbol)
+
+				} else {
+					panic(fmt.Sprintf("wrong mode: %s", mode))
+				}
+
 			}(wg)
 		}
 
 		wg.Wait()
 		// sleep
 		time.Sleep(time.Duration(common.REFRESH_INTERVAL) * time.Minute)
+	}
+}
+
+func main() {
+	var rootCmd = &cobra.Command{
+		Use:   "tradebot",
+		Short: "Trading Bot CLI",
+		Long:  "A CLI tool to run a trading bot or backtest a strategy",
+		Run: func(cmd *cobra.Command, args []string) {
+			tradebot("trade")
+		},
+	}
+
+	var simulateCmd = &cobra.Command{
+		Use:   "simulate",
+		Short: "Run backtesting simulator",
+		Long:  "Run the backtesting simulator",
+		Run: func(cmd *cobra.Command, args []string) {
+			days, _ := cmd.Flags().GetInt("days")
+			param_simulate_startdata = time.Now().AddDate(0, 0, -days).UTC()
+
+			tradebot("simulate")
+		},
+	}
+
+	var updatedataCmd = &cobra.Command{
+		Use:   "updatedata",
+		Short: "update trades data",
+		Long:  "update trades data for exchange",
+		Run: func(cmd *cobra.Command, args []string) {
+			tradebot("updatedata")
+		},
+	}
+
+	// init flag
+	simulateCmd.Flags().Int("days", 90, "Number of days in the past to start the backtest")
+
+	rootCmd.AddCommand(simulateCmd)
+	rootCmd.AddCommand(updatedataCmd)
+
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println("Error:", err)
+		os.Exit(1)
 	}
 }

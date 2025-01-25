@@ -28,12 +28,12 @@ func (b *Bitflyer) FetchCandleSticks(since time.Time, symbol string, interval ti
 }
 
 func (b *Bitflyer) FetchTrades(since time.Time, symbol string) []exchange.Trade {
-	var trades []exchange.Trade
+	var trades = []exchange.Trade{}
 	_trades, ok := cache_trades.Load(symbol)
 	if ok {
 		// load from cache
 		trades = _trades.([]exchange.Trade)
-	} else {
+	} else if !common.IsNullDate(since) {
 		// load from db if not cached
 		var err error
 		trades, err = db.GetDBTradeAfter(since, new(Bitflyer).GetInfo().Name, string(symbol))
@@ -42,9 +42,9 @@ func (b *Bitflyer) FetchTrades(since time.Time, symbol string) []exchange.Trade 
 			since = common.GetUTCNow().Add(-30 * 24 * time.Hour)
 		}
 	}
-	if len(trades) > 0 {
-		// update since if cached or loaded from db
-		since = trades[0].ExecutionTime
+	if len(trades) > 0 || common.IsNullDate(since) {
+		// only get data after cached or loaded from db, or updatedata mode
+		since = trades[len(trades)-1].ExecutionTime
 	}
 
 	executions := []Execution{}
@@ -54,7 +54,7 @@ func (b *Bitflyer) FetchTrades(since time.Time, symbol string) []exchange.Trade 
 		before_id = _executions[len(_executions)-1].ID
 		_since := _executions[len(_executions)-1].ExecDate.Time
 
-		executions = append(executions, _executions...)
+		executions = common.AppendBig(executions, _executions)
 		if _since.Before(since) {
 			break
 		}
@@ -78,13 +78,13 @@ func (b *Bitflyer) FetchTrades(since time.Time, symbol string) []exchange.Trade 
 		}
 	})
 	// rm duplicated trades
-	_newTrades := []exchange.Trade{}
-	for i := len(newTrades) - 1; i >= 0; i-- {
+	_newTrades := make([]exchange.Trade, 0, len(newTrades))
+	for i := 0; i < len(newTrades); i++ {
 		if newTrades[i].ExecutionTime.After(since) {
 			_newTrades = append(_newTrades, newTrades[i])
 		}
 	}
-	trades = append(_newTrades, trades...)
+	trades = common.AppendBig(trades, _newTrades)
 
 	// update cache
 	cache_trades.Store(symbol, trades)
@@ -92,6 +92,7 @@ func (b *Bitflyer) FetchTrades(since time.Time, symbol string) []exchange.Trade 
 	// TODO: reduce insert frequency
 	db.BulkInsertDBTrade(newTrades, new(Bitflyer).GetInfo().Name, symbol)
 
+	// order old -> new
 	return trades
 }
 
@@ -106,7 +107,7 @@ func bitflyerPublicAPICore(url string) (*http.Response, error) {
 			}
 			return resp, nil
 		}
-		logger.Info(new(Bitflyer), "", fmt.Sprintf("over HTTP limit, wait %d, url %s", waitTime, url))
+		logger.Info(new(Bitflyer), "", fmt.Sprintf("over HTTP limit, wait %dm%ds, url %s", int(waitTime.Minutes()), int(waitTime.Seconds()), url))
 		time.Sleep(waitTime)
 	}
 }

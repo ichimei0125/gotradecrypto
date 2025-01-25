@@ -11,10 +11,14 @@ import (
 
 type Exchange interface {
 	GetInfo() ExchangeInfo
+
 	// Public
-	FetchTrades(since time.Time, symbol string) []Trade
-	FetchCandleSticks(since time.Time, symbol string, interval time.Duration) []CandleStick
+
+	FetchTrades(since time.Time, symbol string) []Trade                                     // order: old -> new
+	FetchCandleSticks(since time.Time, symbol string, interval time.Duration) []CandleStick // order: old -> new
+
 	// Private
+
 	BuyCypto(symbol string, size float64, price float64)
 	SellCypto(symbol string, size float64, price float64)
 	SellAllCypto()

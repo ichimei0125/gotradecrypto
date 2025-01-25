@@ -45,56 +45,81 @@ func SumClose(klines []CandleStick) float64 {
 	return sum
 }
 
-func GetClose(KLine []CandleStick) []float64 {
-	res := make([]float64, len(KLine))
-	for i, k := range KLine {
-		res[i] = k.Close
+// mode: "open", "close", "high", "low"
+func GetPrice(candlesticks []CandleStick, mode string) []float64 {
+	res := make([]float64, len(candlesticks))
+
+	switch mode {
+	case "close":
+		for i, k := range candlesticks {
+			res[i] = k.Close
+		}
+	case "open":
+		for i, k := range candlesticks {
+			res[i] = k.Open
+		}
+	case "high":
+		for i, k := range candlesticks {
+			res[i] = k.High
+		}
+	case "low":
+		for i, k := range candlesticks {
+			res[i] = k.Low
+		}
+	default:
+		panic("mode must be \"open\", \"close\", \"high\", \"low\"")
 	}
+
 	return res
 }
 
-// trades: sorted new -> old
+// trades: sorted old -> new
 func TradesToCandleStickByMinute(trades []Trade, minutes int) []CandleStick {
 	if !(minutes > 0 && minutes < 60) {
 		panic(fmt.Sprintf("minutes must in 1~59, minutes: %d", minutes))
 	}
 
-	lastest_time := trades[0].ExecutionTime
-	norm_minute := int(lastest_time.Minute()/minutes) * minutes
-	start_time := time.Date(lastest_time.Year(), lastest_time.Month(), lastest_time.Day(), lastest_time.Hour(), norm_minute, 0, 0, lastest_time.Location())
+	openTime := trades[0].ExecutionTime
+	norm_minute := int(openTime.Minute()/minutes) * minutes
+	openTime = time.Date(openTime.Year(), openTime.Month(), openTime.Day(), openTime.Hour(), norm_minute, 0, 0, openTime.Location())
 
-	return convertTradesToCandleStick(trades, start_time, time.Duration(minutes*int(time.Minute)))
+	return convertTradesToCandleStick(trades, openTime, time.Duration(minutes*int(time.Minute)))
 
 }
 
-// trades: sorted new -> old
-func convertTradesToCandleStick(trades []Trade, start_time time.Time, duration time.Duration) []CandleStick {
-	candlesticks := []CandleStick{}
+// trades: sorted old -> new
+func convertTradesToCandleStick(trades []Trade, openTime time.Time, duration time.Duration) []CandleStick {
+	candlesticks := make([]CandleStick, 0, 1200)
 
+	nextOpenTime := openTime.Add(duration)
 	prices := []float64{}
 	vol := 0.0
-	for _, trade := range trades {
-		if trade.ExecutionTime.After(start_time) {
+	for i, trade := range trades {
+		if trade.ExecutionTime.Before(nextOpenTime) {
 			prices = append(prices, trade.Price)
 			vol += trade.Size
-		} else {
-			// it is possible no trading
-			if len(prices) > 0 {
-				// append to candlestick
-				candlesticks = append(candlesticks, CandleStick{
-					Open:     prices[len(prices)-1],
-					Close:    prices[0],
-					High:     slices.Max(prices),
-					Low:      slices.Min(prices),
-					Volume:   common.Round(vol, 3),
-					OpenTime: start_time,
-				})
+			// the last piece will not continue
+			if i < len(trades)-1 {
+				continue
 			}
-			// reset tmp vals
-			prices = []float64{}
-			vol = 0.0
-			start_time = start_time.Add(-duration)
 		}
+		// it is possible no trading
+		if len(prices) > 0 {
+			// append to candlestick
+			candlesticks = append(candlesticks, CandleStick{
+				Open:     prices[len(prices)-1],
+				Close:    prices[0],
+				High:     slices.Max(prices),
+				Low:      slices.Min(prices),
+				Volume:   common.Round(vol, 3),
+				OpenTime: openTime,
+			})
+		}
+		// reset tmp vals
+		prices = []float64{}
+		vol = 0.0
+		openTime = nextOpenTime
+		nextOpenTime = openTime.Add(duration)
 	}
 
 	return candlesticks
