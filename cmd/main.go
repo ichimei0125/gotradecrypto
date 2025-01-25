@@ -50,10 +50,10 @@ func tradebot(mode string) {
 	}
 
 	// init log
-	logger.InitLogger(nil, "", 10, 5, 30, true)
+	logger.InitLogger("", "", 10, 5, 30, true)
 	for _, t := range tradings {
-		logger.InitLogger(t.exchange, t.symbol, 10, 5, 30, true)
-		logger.Print(t.exchange, t.symbol, "Time, PriceNow, Open, Close, High, Low, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, RSI, BUY, SELL")
+		logger.InitLogger(t.exchange.GetInfo().Name, t.symbol, 10, 5, 30, true)
+		// logger.Print(t.exchange, t.symbol, "Time, PriceNow, Open, Close, High, Low, SMA, EMA, BBands+3, BBands+2, BBands-2, BBands-3, K, D, SMASlope, RSI, BUY, SELL")
 	}
 
 	// init db

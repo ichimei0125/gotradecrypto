@@ -14,7 +14,6 @@ import (
 	"github.com/ichimei0125/gotradecrypto/internal/common"
 	"github.com/ichimei0125/gotradecrypto/internal/db"
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
-	"github.com/ichimei0125/gotradecrypto/internal/logger"
 )
 
 var (
@@ -107,7 +106,7 @@ func bitflyerPublicAPICore(url string) (*http.Response, error) {
 			}
 			return resp, nil
 		}
-		logger.Info(new(Bitflyer), "", fmt.Sprintf("over HTTP limit, wait %dm%ds, url %s", int(waitTime.Minutes()), int(waitTime.Seconds()), url))
+		fmt.Printf("over HTTP limit, wait %dm%ds, url %s", int(waitTime.Minutes()), int(waitTime.Seconds()), url)
 		time.Sleep(waitTime)
 	}
 }

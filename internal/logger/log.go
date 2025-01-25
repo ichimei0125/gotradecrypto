@@ -9,7 +9,6 @@ import (
 
 	"github.com/ichimei0125/gotradecrypto/internal/common"
 	"github.com/ichimei0125/gotradecrypto/internal/config"
-	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
@@ -19,17 +18,17 @@ var (
 	mutex   sync.Mutex
 )
 
-func getFileName(e exchange.Exchange, s string) string {
+func getFileName(exchangeName, symbol string) string {
 	filename := "app.log"
-	if e != nil && s != "" {
-		filename = common.GetUniqueName(e.GetInfo().Name, string(s)) + ".log"
+	if exchangeName != "" && symbol != "" {
+		filename = common.GetUniqueName(exchangeName, symbol) + ".log"
 	}
 	return filename
 }
 
 // InitLogger
-func InitLogger(e exchange.Exchange, symbol string, maxSize, maxBackups, maxAge int, compress bool) {
-	filename := getFileName(e, symbol)
+func InitLogger(exchangeName, symbol string, maxSize, maxBackups, maxAge int, compress bool) {
+	filename := getFileName(exchangeName, symbol)
 	log_folder := config.GetEnvVar(common.ENV_LOG_PATH[0], common.ENV_LOG_PATH[1])
 	path := path.Join(log_folder, filename)
 	mutex.Lock()
@@ -72,19 +71,18 @@ func getDir(filePath string) string {
 	return filepath.Dir(filePath)
 }
 
-func getLogger(e exchange.Exchange, s string) *log.Logger {
+func getLogger(e, s string) *log.Logger {
 	filename := getFileName(e, s)
 	mutex.Lock()
 	defer mutex.Unlock()
 	logger, exists := loggers[filename]
 	if !exists {
-		log.Printf("Logger not initialized for Exchange: %s, Symbol: %s. Please call InitLogger first.", e.GetInfo().Name, string(s))
+		log.Printf("Logger not initialized for Exchange: %s, Symbol: %s. Please call InitLogger first.", e, string(s))
 	}
 	return logger
 }
 
-// Info 记录信息级别日志
-func Info(e exchange.Exchange, s string, v ...interface{}) {
+func Info(e, s string, v ...interface{}) {
 	logger := getLogger(e, s)
 	if logger == nil {
 		return
@@ -93,13 +91,12 @@ func Info(e exchange.Exchange, s string, v ...interface{}) {
 	logger.Println(v...)
 }
 
-// Error 记录错误级别日志
 func Error(v ...interface{}) {
-	var e exchange.Exchange = nil
+	var e string = ""
 	var s string = ""
 
 	if len(v) >= 3 {
-		e, s = v[0].(exchange.Exchange), v[1].(string)
+		e, s = v[0].(string), v[1].(string)
 		v = v[2:]
 	}
 
@@ -111,8 +108,7 @@ func Error(v ...interface{}) {
 	logger.Println(v...)
 }
 
-// Debug 记录调试级别日志
-func Debug(e exchange.Exchange, s string, v ...interface{}) {
+func Debug(e, s string, v ...interface{}) {
 	logger := getLogger(e, s)
 	if logger == nil {
 		return
@@ -121,7 +117,7 @@ func Debug(e exchange.Exchange, s string, v ...interface{}) {
 	logger.Println(v...)
 }
 
-func Print(e exchange.Exchange, s string, v ...interface{}) {
+func Print(e, s string, v ...interface{}) {
 	logger := getLogger(e, s)
 	if logger == nil {
 		return
