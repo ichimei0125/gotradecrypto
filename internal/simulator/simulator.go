@@ -60,20 +60,24 @@ func Simulator(e exchange.Exchange, symbol string, startTime time.Time) {
 }
 
 func sell(c exchange.CandleStick, e, s string) {
+	if coin < 0.00000001 {
+		return
+	}
+
 	money += coin * c.Close
 	coin = 0.0
 	if money < loss_cut {
 		logger.Print(e, s, "loss cut", money)
 	}
 
-	logger.Print(e, s, money)
+	logger.Print(e, s, money, coin)
 
 }
 
 func buy(c exchange.CandleStick, e, s string) {
-	if money > 0 {
-		coin = invest_money / c.Close
-		money -= init_money
+	if money >= invest_money {
+		coin += invest_money / c.Close
+		money -= invest_money
+		logger.Print(e, s, money, coin)
 	}
-	logger.Print(e, s, money)
 }
