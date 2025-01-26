@@ -14,7 +14,7 @@ symbols:
     - XRP_JPY
     - ETH_JPY
     - XLM_JPY
-    - MONA_JPY
+    # - MONA_JPY
     - ELF_JPY
     # - ETH_BTC
     # - BCH_BTC 
