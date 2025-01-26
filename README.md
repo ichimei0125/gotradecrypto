@@ -65,3 +65,5 @@ go を勉強したく、また最近仮想通貨は話題になり、本プロ�
 - [ ] LSTMを利用して、価格予測 
 - [ ] LLMを利用して、ニュース解析により、価格予測
 - [ ] RL/NNを使って、OrderBook・出来高を見てリスク回避
+
+※AIに関する検証はこちら[tradesmart](https://github.com/ichimei0125/tradesmart)
