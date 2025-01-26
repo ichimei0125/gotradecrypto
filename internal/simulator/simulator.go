@@ -3,6 +3,7 @@ package simulator
 import (
 	"time"
 
+	"github.com/ichimei0125/gotradecrypto/internal/common"
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 	"github.com/ichimei0125/gotradecrypto/internal/indicator"
 	"github.com/ichimei0125/gotradecrypto/internal/logger"
@@ -26,14 +27,14 @@ func Simulator(e exchange.Exchange, symbol string, startTime time.Time) {
 	// TODO: realtime
 	waitDuration := e.GetInfo().Waittime
 
-	endTime := startTime.Add(time.Duration((tradeengine.CANDLESTICK_LENGTH + 2) * tradeengine.CANDLESTICK_INTERVAL * time.Minute))
+	endTime := startTime.Add(time.Duration(common.KLINE_INTERVAL * (common.KLINE_LENGTH + 2) * int(time.Minute)))
 	_trades := []exchange.Trade{}
 	for _, trade := range trades {
 		if trade.ExecutionTime.Before(endTime) {
 			_trades = append(_trades, trade)
 			continue
 		}
-		candlesticks := exchange.TradesToCandleStickByMinute(_trades, tradeengine.CANDLESTICK_INTERVAL)
+		candlesticks := exchange.TradesToCandleStickByMinute(_trades, common.KLINE_INTERVAL)
 		indicator.GetIndicators(&candlesticks)
 		tradestatus := tradeengine.Tradestrategy(candlesticks)
 		if tradestatus == tradeengine.BUY {

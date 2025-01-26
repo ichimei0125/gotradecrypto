@@ -89,7 +89,7 @@ func TradesToCandleStickByMinute(trades []Trade, minutes int) []CandleStick {
 
 // trades: sorted old -> new
 func convertTradesToCandleStick(trades []Trade, openTime time.Time, duration time.Duration) []CandleStick {
-	candlesticks := make([]CandleStick, 0, 1200)
+	candlesticks := make([]CandleStick, 0, common.KLINE_LENGTH+5)
 
 	nextOpenTime := openTime.Add(duration)
 	prices := []float64{}

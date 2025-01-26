@@ -12,11 +12,6 @@ const (
 	HOLD
 )
 
-const (
-	CANDLESTICK_LENGTH   = 1000
-	CANDLESTICK_INTERVAL = 3
-)
-
 func Trade(e exchange.Exchange, symbol string, data []exchange.CandleStick) {
 	e.CheckUnfinishedOrder(symbol)
 
