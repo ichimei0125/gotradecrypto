@@ -2,6 +2,7 @@ package simulator
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/ichimei0125/gotradecrypto/internal/common"
@@ -17,9 +18,13 @@ const (
 	loss_cut     = 40000
 )
 
+type balance struct {
+	money float64
+	coin  float64
+}
+
 var (
-	money = float64(init_money)
-	coin  = 0.0
+	balanceStore sync.Map
 )
 
 func Simulator(e exchange.Exchange, symbol string, startTime time.Time) {
@@ -38,11 +43,12 @@ func Simulator(e exchange.Exchange, symbol string, startTime time.Time) {
 		candlesticks := exchange.TradesToCandleStickByMinute(_trades, common.KLINE_INTERVAL)
 		indicator.GetIndicators(&candlesticks)
 		tradestatus := tradeengine.Tradestrategy(candlesticks)
+		key := common.GetUniqueName(e.GetInfo().Name, symbol)
 		if tradestatus == tradeengine.BUY {
-			buy(candlesticks[len(candlesticks)-1], e.GetInfo().Name, symbol)
+			buy(candlesticks[len(candlesticks)-1], e.GetInfo().Name, symbol, key)
 		}
 		if tradestatus == tradeengine.SELL {
-			sell(candlesticks[len(candlesticks)-1], e.GetInfo().Name, symbol)
+			sell(candlesticks[len(candlesticks)-1], e.GetInfo().Name, symbol, key)
 		}
 		// logger.Print(e, symbol, candlesticks[len(candlesticks)-1].OpenTime)
 
@@ -61,29 +67,52 @@ func Simulator(e exchange.Exchange, symbol string, startTime time.Time) {
 
 }
 
-func sell(c exchange.CandleStick, e, s string) {
-	if coin < 0.00000001 {
+func sell(c exchange.CandleStick, e, s string, key string) {
+	var b balance
+	_b, ok := balanceStore.Load(key)
+	if ok {
+		b = _b.(balance)
+	} else {
 		return
 	}
 
-	money += coin * c.Close
-	coin = 0.0
-	if money < loss_cut {
-		msg := fmt.Sprintf("!!!loss cut!!!%s, %.2f, %.5f", c.OpenTime.Format(time.DateTime), money, coin)
+	if b.coin < 0.00000001 {
+		return
+	}
+
+	b.money += b.coin * c.Close
+	b.coin = 0.0
+	if b.money < loss_cut {
+		msg := fmt.Sprintf("!!!loss cut!!!%s, %.2f, %.5f", c.OpenTime.Format(time.DateTime), b.money, b.coin)
 		logger.Print(e, s, msg)
 	}
 
-	msg := fmt.Sprintf("%s, %.2f, %.5f", c.OpenTime.Format(time.DateTime), money, coin)
+	msg := fmt.Sprintf("%s, %.2f, %.5f", c.OpenTime.Format(time.DateTime), b.money, b.coin)
 	logger.Print(e, s, msg)
+
+	balanceStore.Store(key, b)
 
 }
 
-func buy(c exchange.CandleStick, e, s string) {
-	if money >= invest_money {
-		coin += invest_money / c.Close
-		money -= invest_money
+func buy(c exchange.CandleStick, e, s string, key string) {
+	var b balance
+	_b, ok := balanceStore.Load(key)
+	if ok {
+		b = _b.(balance)
+	} else {
+		b = balance{
+			money: float64(init_money),
+			coin:  0,
+		}
+	}
 
-		msg := fmt.Sprintf("%s, %.2f, %.5f", c.OpenTime.Format(time.DateTime), money, coin)
+	if b.money >= invest_money {
+		b.coin += invest_money / c.Close
+		b.money -= invest_money
+
+		msg := fmt.Sprintf("%s, %.2f, %.5f", c.OpenTime.Format(time.DateTime), b.money, b.coin)
 		logger.Print(e, s, msg)
 	}
+
+	balanceStore.Store(key, b)
 }
