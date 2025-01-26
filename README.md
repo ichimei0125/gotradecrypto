@@ -5,7 +5,7 @@
 ## TL;DR
 go を勉強したく、また最近仮想通貨は話題になり、本プロジェクトを始まりました。
 
-## 使用 (開発中ので不安定可能性あり、v0.1に安定版をリリース)
+## 使用 (開発中ので不安定可能性あり、安定版リリース予定v0.1.0)
 1. git cloneでソースコードをダウンロードし、Maria DBをインストールし、 `scripts/db/init_mariadb.sql` のパスワードを設定してDB初期化
 2. config.example.yamlをconfig.yamlリネームする
   - [bitflyer lighting](https://lightning.bitflyer.com/)をログインし、左側三本線を開き、APIをクリックする。新しいAPIを追加、「資産」と「トレード」は必要が、「入出金」では必要ない。API KEYとAPI SECRETをconfig.yamlに記入
@@ -55,6 +55,7 @@ go を勉強したく、また最近仮想通貨は話題になり、本プロ�
 - ストキャスティクス（STOCK）の %D または %K が75以上
 
 ## milestone
+- [ ] v0.1.0 初期リリース
 - [ ] v0.0.5 より豊富なデプロイ方法（docker, クラウドなど）
 - [ ] v0.0.4 configやguiなど、簡単に取引ロジック（インジケーターで買売判断）を作成
 - [x] v0.0.3 シミュレーター
