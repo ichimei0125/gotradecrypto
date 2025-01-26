@@ -13,10 +13,11 @@ go を勉強したく、また最近仮想通貨は話題になり、本プロ�
    - cut_lossは保有する仮想通貨全部売ったあと、この金額より少ないなら取引停止（プログラムは停止しない）
    - safe_moneyは口座中最低限の金額
    - symbolsは取引したい取引所と仮想通貨
+    
      ※現時点仮想通貨-日本円のペアだけサポートので、ETH-BTC, BCH-BTCは使わないてください
    - 1に設定されたパスワードをconnection_stringに
-3. `go build -o gotradecrypto cmd/main.go` でプログラムをビルドし、ターミナルで実行する
-  - macの場合、scripts/mac/launchd にlaunchdスクリプトを用意した。パスを変更してください
+4. `go build -o gotradecrypto cmd/main.go` でプログラムをビルドし、ターミナルで実行する
+   - macの場合、scripts/mac/launchd にlaunchdスクリプトを用意した。パスを変更してください
 
 ## 構成概要
 
