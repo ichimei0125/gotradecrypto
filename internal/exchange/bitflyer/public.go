@@ -32,10 +32,17 @@ func (b *Bitflyer) FetchTrades(since time.Time, symbol string) []exchange.Trade 
 	}
 
 	var trades = []exchange.Trade{}
-	_trades, ok := cache_trades.Load(symbol)
+	c_trades, ok := cache_trades.Load(symbol)
 	if ok {
 		// load from cache
-		trades = _trades.([]exchange.Trade)
+		_trades := c_trades.([]exchange.Trade)
+		// rm too old data
+		trades = make([]exchange.Trade, 0, len(_trades))
+		for _, trade := range _trades {
+			if trade.ExecutionTime.After(since) {
+				trades = append(trades, trade)
+			}
+		}
 	} else {
 		// load from db if not cached
 		var err error

@@ -5,18 +5,17 @@
 ## TL;DR
 go を勉強したく、また最近仮想通貨は話題になり、本プロジェクトを始まりました。
 
-## 使用
-1. git cloneでソースコードをダウンロード
+## 使用 (開発中ので不安定可能性あり、v0.1に安定版をリリース)
+1. git cloneでソースコードをダウンロードし、Maria DBをインストールし、 `scripts/db/init_mariadb.sql` のパスワードを設定してDB初期化
 2. config.example.yamlをconfig.yamlリネームする
   - [bitflyer lighting](https://lightning.bitflyer.com/)をログインし、左側三本線を開き、APIをクリックする。新しいAPIを追加、「資産」と「トレード」は必要が、「入出金」では必要ない。API KEYとAPI SECRETをconfig.yamlに記入
   - invest_moneyは毎回投資の金額
   - cut_lossは保有する仮想通貨全部売ったあと、この金額より少ないなら取引停止（プログラムは停止しない）
-  - ~~safe_moneyは口座中最低限の金額~~（現在バグ中）
-  - dry_runがtrueの場合、取引しない、ただ価格を取得する。falseの場合取引する
-3. 取引しない時、data/local.dbに約定履歴を書き込み、log/{取引所_仮想通貨}.logに価格や指標などを出力
-4. configを設定したら、 `go build -o gotradecrypto cmd/main.go` でプログラムをビルドし、ターミナルで実行する
+  - safe_moneyは口座中最低限の金額
+  - symbolsは取引したい取引所と仮想通貨の種類
+  - 1に設定されたパスワードをconnection_stringに
+3. `go build -o gotradecrypto cmd/main.go` でプログラムをビルドし、ターミナルで実行する
   - macの場合、scripts/mac/launchd にlaunchdスクリプトを用意した。パスを変更してください
-5. BTCとXRPを例とする。他の仮想通貨で取引したい場合、cmd/main.go 中41行目　exchange.XRPJPYを他の仮想通貨に変更し、config.yamlのdry_runに仮想通貨を記入（定義はinternal/exchange/exchange.go）
 
 > 複数の仮想通貨同時取引はプログラム上サポートしているが、取引所のAPI制限でエラー出る可能性ある。解決中が、しばらく1~2種類の仮想通貨を取引
 

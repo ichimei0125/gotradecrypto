@@ -10,8 +10,10 @@ import (
 	"github.com/ichimei0125/gotradecrypto/internal/db"
 	"github.com/ichimei0125/gotradecrypto/internal/exchange"
 	"github.com/ichimei0125/gotradecrypto/internal/exchange/bitflyer"
+	"github.com/ichimei0125/gotradecrypto/internal/indicator"
 	"github.com/ichimei0125/gotradecrypto/internal/logger"
 	"github.com/ichimei0125/gotradecrypto/internal/simulator"
+	"github.com/ichimei0125/gotradecrypto/internal/tradeengine"
 	"github.com/spf13/cobra"
 )
 
@@ -73,16 +75,15 @@ func tradebot(mode string) {
 				defer wg.Done()
 
 				if mode == "trade" {
-					since := time.Date(2025, 1, 20, 0, 0, 0, 0, time.UTC)
-					test := localT.exchange.FetchCandleSticks(since, string(localT.symbol), time.Duration(3*time.Minute))
-					fmt.Println(localT.symbol, test[1].OpenTime, test[1].Open, test[1].High, test[1].Low, test[1].Close, test[1].Volume)
-					// localT.exchange.FetchCandleSticks(localT.symbol, localT.kine)
-					// indicator.GetIndicators(localT.kine)
+					since := common.GetUTCNow().Add(time.Duration(-common.KLINE_INTERVAL * (common.KLINE_LENGTH + 2) * int(time.Minute)))
+					candlesticks := localT.exchange.FetchCandleSticks(since, string(localT.symbol), time.Duration(3*time.Minute))
+					indicator.GetIndicators(&candlesticks)
 
-					// go func() {
-					// 	// defer handlePanic()
-					// 	trade.Trade(localT.exchange, localT.symbol, localT.kine)
-					// }()
+					go func() {
+						// defer handlePanic()
+						tradeengine.Trade(localT.exchange, localT.symbol, candlesticks)
+					}()
+
 				} else if mode == "simulate" {
 					simulator.Simulator(localT.exchange, localT.symbol, param_simulate_startdata)
 				} else if mode == "updatedata" {
