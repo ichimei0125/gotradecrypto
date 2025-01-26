@@ -1,6 +1,7 @@
 package simulator
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/ichimei0125/gotradecrypto/internal/common"
@@ -68,10 +69,12 @@ func sell(c exchange.CandleStick, e, s string) {
 	money += coin * c.Close
 	coin = 0.0
 	if money < loss_cut {
-		logger.Print(e, s, "loss cut", money)
+		msg := fmt.Sprintf("!!!loss cut!!!%s, %.2f, %.5f", c.OpenTime.Format(time.DateTime), money, coin)
+		logger.Print(e, s, msg)
 	}
 
-	logger.Print(e, s, c.OpenTime, money, coin)
+	msg := fmt.Sprintf("%s, %.2f, %.5f", c.OpenTime.Format(time.DateTime), money, coin)
+	logger.Print(e, s, msg)
 
 }
 
@@ -79,6 +82,8 @@ func buy(c exchange.CandleStick, e, s string) {
 	if money >= invest_money {
 		coin += invest_money / c.Close
 		money -= invest_money
-		logger.Print(e, s, c.OpenTime, money, coin)
+
+		msg := fmt.Sprintf("%s, %.2f, %.5f", c.OpenTime.Format(time.DateTime), money, coin)
+		logger.Print(e, s, msg)
 	}
 }
