@@ -27,12 +27,16 @@ func (b *Bitflyer) FetchCandleSticks(since time.Time, symbol string, interval ti
 }
 
 func (b *Bitflyer) FetchTrades(since time.Time, symbol string) []exchange.Trade {
+	if common.IsNullDate(since) {
+		since = common.GetUTCNow().Add(-30 * 24 * time.Hour)
+	}
+
 	var trades = []exchange.Trade{}
 	_trades, ok := cache_trades.Load(symbol)
 	if ok {
 		// load from cache
 		trades = _trades.([]exchange.Trade)
-	} else if !common.IsNullDate(since) {
+	} else {
 		// load from db if not cached
 		var err error
 		trades, err = db.GetDBTradeAfter(since, new(Bitflyer).GetInfo().Name, string(symbol))
@@ -41,7 +45,7 @@ func (b *Bitflyer) FetchTrades(since time.Time, symbol string) []exchange.Trade 
 			since = common.GetUTCNow().Add(-30 * 24 * time.Hour)
 		}
 	}
-	if len(trades) > 0 || common.IsNullDate(since) {
+	if len(trades) > 0 {
 		// only get data after cached or loaded from db, or updatedata mode
 		since = trades[len(trades)-1].ExecutionTime
 	}
@@ -106,7 +110,7 @@ func bitflyerPublicAPICore(url string) (*http.Response, error) {
 			}
 			return resp, nil
 		}
-		fmt.Printf("over HTTP limit, wait %dm%ds, url %s", int(waitTime.Minutes()), int(waitTime.Seconds()), url)
+		fmt.Printf("over HTTP limit, wait %.2fm, start at %s \nurl %s\n", waitTime.Minutes(), common.GetNow().Add(waitTime).Format(time.TimeOnly), url)
 		time.Sleep(waitTime)
 	}
 }

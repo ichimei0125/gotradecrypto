@@ -70,7 +70,7 @@ func sell(c exchange.CandleStick, e, s string) {
 		logger.Print(e, s, "loss cut", money)
 	}
 
-	logger.Print(e, s, money, coin)
+	logger.Print(e, s, c.OpenTime, money, coin)
 
 }
 
@@ -78,6 +78,6 @@ func buy(c exchange.CandleStick, e, s string) {
 	if money >= invest_money {
 		coin += invest_money / c.Close
 		money -= invest_money
-		logger.Print(e, s, money, coin)
+		logger.Print(e, s, c.OpenTime, money, coin)
 	}
 }

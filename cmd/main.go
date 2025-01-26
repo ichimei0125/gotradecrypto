@@ -96,8 +96,11 @@ func tradebot(mode string) {
 		}
 
 		wg.Wait()
-		// sleep
-		time.Sleep(time.Duration(common.REFRESH_INTERVAL) * time.Minute)
+		if mode == "trade" {
+			time.Sleep(time.Duration(common.REFRESH_INTERVAL) * time.Minute)
+		} else {
+			break
+		}
 	}
 }
 
