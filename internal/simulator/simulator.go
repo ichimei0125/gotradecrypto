@@ -27,7 +27,7 @@ func Simulator(e exchange.Exchange, symbol string, startTime time.Time) {
 	// TODO: realtime
 	waitDuration := e.GetInfo().Waittime
 
-	endTime := startTime.Add(time.Duration(common.KLINE_INTERVAL * (common.KLINE_LENGTH + 2) * int(time.Minute)))
+	endTime := trades[0].ExecutionTime.Add(time.Duration(common.KLINE_INTERVAL * (common.KLINE_LENGTH + 2) * int(time.Minute)))
 	_trades := []exchange.Trade{}
 	for _, trade := range trades {
 		if trade.ExecutionTime.Before(endTime) {
